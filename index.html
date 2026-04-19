@@ -142,9 +142,10 @@
       border: 1px solid #d1d5db;
       border-radius: 12px;
       background: #fff;
-      font-size: 15px;
+      font-size: 16px;
       color: var(--text);
       transition: 0.2s ease;
+      touch-action: manipulation;
     }
 
     input:focus,
@@ -163,10 +164,11 @@
       border: none;
       border-radius: 12px;
       padding: 12px 18px;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 700;
       cursor: pointer;
       transition: 0.2s ease;
+      touch-action: manipulation;
     }
 
     button:hover {
@@ -506,6 +508,11 @@
       border-bottom: none;
     }
 
+    .saved-bills-card {
+      width: 100%;
+      grid-column: 1 / -1;
+    }
+
     @media (max-width: 1024px) {
       .grid {
         grid-template-columns: 1fr;
@@ -557,7 +564,13 @@
         padding: 10px 8px;
         font-size: 13px;
       }
-      
+
+      input,
+        select,
+        button {
+        font-size: 16px;
+      }
+
     }
   </style>
 </head>
@@ -697,7 +710,7 @@
 </div>
 
 <!-- SAVED BILLS -->
-<div class="card" style="margin-top: 20px;">
+<div class="card saved-bills-card" style="margin-top: 20px;">
 
     <!-- SAVED BILLS -->
     <div class="card" style="margin-top: 20px;">
