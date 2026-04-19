@@ -2,14 +2,14 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <title>ระบบบันทึกยอดขาย</title>
   <style>
     :root {
       --bg: #f4f7fb;
       --card: #ffffff;
       --line: #e5e7eb;
-      --text: #1f2937;
+      --text: #1a0e0e;
       --muted: #6b7280;
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
@@ -513,6 +513,10 @@
       grid-column: 1 / -1;
     }
 
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
     @media (max-width: 1024px) {
       .grid {
         grid-template-columns: 1fr;
@@ -709,11 +713,9 @@
 </div>
 </div>
 
-<!-- SAVED BILLS -->
-<div class="card saved-bills-card" style="margin-top: 20px;">
 
     <!-- SAVED BILLS -->
-    <div class="card" style="margin-top: 20px;">
+    <div class="card saved-bills-card" style="margin-top: 20px;">
       <div class="card-header">
         <h2>บิลที่บันทึกไว้</h2>
         <p>แต่ละแถวคือ 1 บิล ซึ่งสามารถมีหลายเมนูอาหาร</p>
