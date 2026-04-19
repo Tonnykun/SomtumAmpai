@@ -61,6 +61,14 @@
         calc(16px + env(safe-area-inset-left));
     }
 
+    .summary-date-field {
+      margin-bottom: 14px;
+    }
+
+    .summary-date-field input {
+      width: 100%;
+    }
+
     .topbar {
       display: flex;
       flex-direction: column;
@@ -730,7 +738,7 @@
 
           <div class="actions">
             <button class="btn-save" onclick="saveCurrentBill()">บันทึกบิล</button>
-            <button class="btn-summary" onclick="showTodaySummary()">Summary วันนี้</button>
+            <button class="btn-summary" onclick="showTodaySummary()">Summary ตามวันที่</button>
             <button class="btn-clear" onclick="clearCurrentBill()">ล้างบิลปัจจุบัน</button>
             <button class="btn-delete-all" onclick="clearAllBills()">ลบข้อมูลทั้งหมด</button>
           </div>
@@ -749,13 +757,18 @@
         </div>
 
         <div class="card-body">
+          <div class="field summary-date-field">
+            <label for="summaryDate">เลือกวันที่สรุป</label>
+            <input type="date" id="summaryDate" />
+          </div>
+            <button class="btn-summary" style="width:100%; margin-bottom:14px;" onclick="showTodaySummary()">
+            Summary เลือกวันที่
+            </button>
           <div class="summary-placeholder">
-            ยังไม่แสดงผลอัตโนมัติ<br />
-            ระบบจะเปิดสลิปสรุปเมื่อกดปุ่ม Summary วันนี้
+            เลือกวันที่ก่อน แล้วกดปุ่ม Summary เพื่อดูสลิปสรุปยอดขาย
           </div>
         </div>
       </div>
-    </div>
 
     <!-- SAVED BILLS -->
     <div class="card saved-bills-card">
@@ -852,6 +865,7 @@
     const foodItemInput = document.getElementById("foodItem");
     const itemPriceInput = document.getElementById("itemPrice");
     const itemQtyInput = document.getElementById("itemQty");
+    const summaryDateInput = document.getElementById("summaryDate");
 
     const currentBillBody = document.getElementById("currentBillBody");
     const savedBillsBody = document.getElementById("savedBillsBody");
@@ -1129,33 +1143,33 @@
     }
 
     function showTodaySummary() {
-      const today = getToday();
+      const selectedDate = summaryDateInput.value || getToday();
       const bills = getBills();
-      const todayBills = bills.filter(bill => bill.date === today);
+      const selectedBills = bills.filter(bill => bill.date === selectedDate);
 
-      slipDate.textContent = `วันที่: ${today}`;
+      slipDate.textContent = `วันที่: ${selectedDate}`;
 
-      if (todayBills.length === 0) {
+      if (selectedBills.length === 0) {
         summaryBox.innerHTML = `
           <div class="slip-row">
             <span>วันที่</span>
-            <strong>${today}</strong>
+            <strong>${selectedDate}</strong>
           </div>
           <div class="slip-divider"></div>
           <div style="text-align:center; color:#64748b;">
-            ยังไม่มีข้อมูลยอดขายของวันนี้
+            ยังไม่มีข้อมูลยอดขายของวันที่นี้
           </div>
         `;
         summaryModal.classList.add("show");
         return;
       }
 
-      const totalSales = todayBills.reduce((sum, bill) => sum + bill.totalAmount, 0);
-      const totalBills = todayBills.length;
+      const totalSales = selectedBills.reduce((sum, bill) => sum + bill.totalAmount, 0);
+      const totalBills = selectedBills.length;
       let totalQty = 0;
       const groupedFood = {};
 
-      todayBills.forEach(bill => {
+      selectedBills.forEach(bill => {
         bill.items.forEach(item => {
           totalQty += item.qty;
 
@@ -1212,6 +1226,7 @@
     function initializeApp() {
       const today = getToday();
       saleDateInput.value = today;
+      summaryDateInput.value = today;
       todayBadge.textContent = "วันนี้: " + today;
 
       renderFoodOptions();
@@ -1224,11 +1239,6 @@
         if (event.key === "Escape") {
           closeSummaryModal();
         }
-      });
-
-      salesChannelInput.addEventListener("change", () => {
-      renderFoodOptions();
-      itemPriceInput.value = "";
       });
     }
 
