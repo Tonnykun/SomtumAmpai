@@ -2,25 +2,36 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
   <title>ระบบบันทึกยอดขาย</title>
+
   <style>
     :root {
-      --bg: #f4f7fb;
+      --bg: #05070b;
       --card: #ffffff;
       --line: #e5e7eb;
-      --text: #1a0e0e;
+      --line-soft: #edf2f7;
+      --text: #111827;
       --muted: #6b7280;
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --success: #16a34a;
-      --success-hover: #15803d;
-      --danger: #dc2626;
-      --danger-soft: #fee2e2;
-      --warning: #f59e0b;
-      --warning-soft: #fef3c7;
-      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-      --radius: 18px;
+
+      --primary: #3f66e0;
+      --primary-hover: #3154c4;
+
+      --success: #4ea956;
+      --success-hover: #3f9347;
+
+      --warning: #e8a33a;
+      --warning-hover: #d59126;
+
+      --soft-warning: #f1e29a;
+      --soft-danger: #f6dada;
+      --danger-text: #d44136;
+
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
+      --radius: 24px;
     }
 
     * {
@@ -28,96 +39,117 @@
       font-family: "Segoe UI", Tahoma, sans-serif;
     }
 
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
     body {
       margin: 0;
-      background: linear-gradient(180deg, #0f0f0f 0%, #111827 50%, #000000 100%);
+      background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.16), transparent 18%),
+        linear-gradient(180deg, #2d2d2d 0%, #0b0f18 12%, #05070b 34%, #000000 100%);
       color: var(--text);
     }
 
     .page {
-      max-width: 1200px;
+      max-width: 1040px;
       margin: 0 auto;
-      padding: 28px 18px 40px;
+      padding:
+        calc(20px + env(safe-area-inset-top))
+        calc(16px + env(safe-area-inset-right))
+        calc(36px + env(safe-area-inset-bottom))
+        calc(16px + env(safe-area-inset-left));
     }
 
     .topbar {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 22px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 18px;
     }
 
     .title-wrap h1 {
       margin: 0;
-      font-size: 28px;
-      font-weight: 700;
-      color: #111827;
+      font-size: clamp(28px, 6vw, 40px);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: #ffffff;
     }
 
     .title-wrap p {
       margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 14px;
+      max-width: 760px;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 15px;
+      line-height: 1.7;
     }
 
     .date-badge {
-      background: #fff;
-      border: 1px solid var(--line);
+      background: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 18px;
       box-shadow: var(--shadow);
-      border-radius: 14px;
-      padding: 10px 14px;
-      font-size: 14px;
-      color: #374151;
+      padding: 12px 16px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #475569;
       white-space: nowrap;
     }
 
     .grid {
       display: grid;
       grid-template-columns: 1.35fr 1fr;
-      gap: 20px;
+      gap: 18px;
       align-items: start;
     }
 
     .card {
       background: var(--card);
-      border: 1px solid rgba(229, 231, 235, 0.9);
+      border: 1px solid rgba(229, 231, 235, 0.95);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .saved-bills-card {
+      width: 100%;
+      margin-top: 20px;
     }
 
     .card-header {
-      padding: 20px 22px 0;
+      padding: 24px 24px 0;
     }
 
     .card-header h2 {
-      margin: 0;
-      font-size: 20px;
-      font-weight: 700;
+      margin: 0 0 6px;
+      font-size: 30px;
+      line-height: 1.1;
+      color: #111827;
     }
 
     .card-header p {
-      margin: 6px 0 0;
-      font-size: 14px;
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.65;
       color: var(--muted);
     }
 
     .card-body {
-      padding: 20px 22px 22px;
+      padding: 20px 24px 24px;
     }
 
     .form-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-      margin-bottom: 18px;
+      gap: 14px;
+      margin-bottom: 16px;
     }
 
     .menu-grid {
       display: grid;
       grid-template-columns: 2fr 1fr 1fr auto;
-      gap: 12px;
+      gap: 14px;
       align-items: end;
       margin-bottom: 18px;
     }
@@ -129,23 +161,25 @@
     }
 
     label {
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 15px;
+      font-weight: 700;
       color: #374151;
     }
 
     input,
     select {
       width: 100%;
-      height: 46px;
-      padding: 0 14px;
+      height: 56px;
+      padding: 0 16px;
       border: 1px solid #d1d5db;
-      border-radius: 12px;
+      border-radius: 16px;
       background: #fff;
-      font-size: 16px;
+      font-size: 17px;
       color: var(--text);
       transition: 0.2s ease;
       touch-action: manipulation;
+      appearance: none;
+      -webkit-appearance: none;
     }
 
     input:focus,
@@ -162,10 +196,11 @@
 
     button {
       border: none;
-      border-radius: 12px;
-      padding: 12px 18px;
-      font-size: 16px;
-      font-weight: 700;
+      border-radius: 16px;
+      padding: 14px 18px;
+      min-height: 56px;
+      font-size: 17px;
+      font-weight: 800;
       cursor: pointer;
       transition: 0.2s ease;
       touch-action: manipulation;
@@ -177,17 +212,17 @@
 
     .btn-add {
       background: var(--warning);
-      color: white;
-      height: 46px;
+      color: #ffffff;
+      height: 56px;
     }
 
     .btn-add:hover {
-      background: #d97706;
+      background: var(--warning-hover);
     }
 
     .btn-save {
       background: var(--success);
-      color: white;
+      color: #ffffff;
     }
 
     .btn-save:hover {
@@ -196,7 +231,7 @@
 
     .btn-summary {
       background: var(--primary);
-      color: white;
+      color: #ffffff;
     }
 
     .btn-summary:hover {
@@ -204,71 +239,44 @@
     }
 
     .btn-clear {
-      background: var(--warning-soft);
-      color: #92400e;
+      background: var(--soft-warning);
+      color: #9a5c08;
     }
 
     .btn-clear:hover {
-      background: #fde68a;
+      background: #ead775;
+    }
+
+    .btn-delete-all {
+      background: var(--soft-danger);
+      color: var(--danger-text);
+    }
+
+    .btn-delete-all:hover {
+      background: #f1c8c8;
     }
 
     .btn-delete {
-      background: var(--danger-soft);
+      background: #fee2e2;
       color: #b91c1c;
-      padding: 8px 12px;
-      font-size: 13px;
-      border-radius: 10px;
+      padding: 10px 14px;
+      min-height: auto;
+      font-size: 14px;
+      border-radius: 12px;
     }
 
     .btn-delete:hover {
       background: #fecaca;
     }
 
-    .btn-delete-all {
-      background: #fee2e2;
-      color: #dc2626;
-    }
-
-    .btn-delete-all:hover {
-      background: #fecaca;
-    }
-
     .actions {
       display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-
-    .draft-summary {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
       gap: 14px;
-      margin-bottom: 16px;
+      flex-wrap: wrap;
+      margin-top: 12px;
     }
 
-    .draft-box,
-    .stat-box {
-      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 16px;
-    }
-
-    .draft-label,
-    .stat-label {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-
-    .draft-value,
-    .stat-value {
-      font-size: 24px;
-      font-weight: 700;
-      color: #111827;
-    }
-
+    .draft-summary,
     .stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -276,46 +284,64 @@
       margin-bottom: 18px;
     }
 
-    .summary-panel {
-      border: 1px dashed #bfdbfe;
-      background: #eff6ff;
-      border-radius: 16px;
-      padding: 16px;
-      color: #1e3a8a;
-      font-size: 15px;
-      line-height: 1.8;
+    .draft-box,
+    .stat-box {
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      min-height: 112px;
+    }
+
+    .draft-label,
+    .stat-label {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .draft-value,
+    .stat-value {
+      font-size: clamp(28px, 6vw, 42px);
+      font-weight: 800;
+      line-height: 1.05;
+      color: #111827;
     }
 
     .section-title {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 4px 0 12px;
       gap: 12px;
       flex-wrap: wrap;
+      margin: 18px 0 12px;
     }
 
     .section-title h3 {
       margin: 0;
-      font-size: 16px;
+      font-size: 20px;
+      color: #111827;
     }
 
     .section-title span {
       color: var(--muted);
-      font-size: 13px;
+      font-size: 14px;
+      line-height: 1.5;
     }
 
     .table-wrap {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
-      border: 1px solid #edf2f7;
-      border-radius: 16px;
+      border: 1px solid var(--line-soft);
+      border-radius: 18px;
+      background: #fff;
     }
 
     table {
       width: 100%;
-      border-collapse: collapse;
       min-width: 760px;
+      border-collapse: collapse;
     }
 
     th,
@@ -323,23 +349,24 @@
       padding: 14px 12px;
       text-align: left;
       border-bottom: 1px solid #eef2f7;
-      font-size: 14px;
       vertical-align: top;
     }
 
     th {
       background: #f8fafc;
-      color: #475569;
-      font-weight: 700;
+      color: #64748b;
+      font-size: 14px;
+      font-weight: 800;
     }
 
     td {
       color: #1f2937;
       background: #fff;
+      font-size: 15px;
     }
 
     .amount {
-      font-weight: 700;
+      font-weight: 800;
       color: #111827;
       white-space: nowrap;
     }
@@ -347,49 +374,52 @@
     .tag {
       display: inline-flex;
       align-items: center;
-      padding: 6px 10px;
+      padding: 7px 11px;
       border-radius: 999px;
       background: #eef2ff;
       color: #3730a3;
-      font-size: 12px;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 800;
     }
 
     .food-lines {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
 
     .food-line {
       background: #f8fafc;
       border: 1px solid #edf2f7;
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-size: 13px;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 14px;
+      line-height: 1.6;
     }
 
     .empty {
       text-align: center;
-      padding: 28px 12px;
+      padding: 32px 14px;
       color: var(--muted);
+      font-size: 15px;
     }
 
     .hint {
-      margin-top: 12px;
-      font-size: 13px;
+      margin-top: 14px;
+      font-size: 14px;
+      line-height: 1.7;
       color: var(--muted);
     }
 
     .summary-placeholder {
       border: 1px dashed #cbd5e1;
       background: #f8fafc;
-      border-radius: 16px;
-      padding: 24px;
+      border-radius: 18px;
+      padding: 34px 20px;
       text-align: center;
       color: #64748b;
       line-height: 1.8;
-      font-size: 15px;
+      font-size: 16px;
     }
 
     .summary-modal {
@@ -409,17 +439,19 @@
     .summary-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(15, 23, 42, 0.45);
-      backdrop-filter: blur(2px);
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(3px);
     }
 
     .summary-slip {
       position: relative;
       z-index: 1;
-      width: min(430px, calc(100vw - 24px));
+      width: min(460px, calc(100vw - 24px));
+      max-height: 85vh;
+      overflow-y: auto;
       background: #ffffff;
-      border-radius: 22px;
-      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+      border-radius: 24px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
       border: 1px solid #e5e7eb;
       padding: 20px;
     }
@@ -435,25 +467,30 @@
     }
 
     .slip-title {
-      font-size: 20px;
-      font-weight: 700;
+      font-size: 24px;
+      font-weight: 800;
       color: #0f172a;
     }
 
     .slip-subtitle {
       margin-top: 4px;
-      font-size: 13px;
+      font-size: 14px;
       color: #64748b;
     }
 
     .slip-close {
-      width: 38px;
-      height: 38px;
+      width: 42px;
+      min-height: 42px;
+      height: 42px;
       padding: 0;
-      border-radius: 10px;
+      border-radius: 12px;
       background: #f1f5f9;
       color: #334155;
       font-size: 16px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .slip-close:hover {
@@ -485,7 +522,7 @@
     }
 
     .slip-section-title {
-      font-weight: 700;
+      font-weight: 800;
       margin: 10px 0 8px;
     }
 
@@ -500,7 +537,7 @@
       justify-content: space-between;
       gap: 12px;
       font-size: 14px;
-      padding: 6px 0;
+      padding: 7px 0;
       border-bottom: 1px dashed #e2e8f0;
     }
 
@@ -508,73 +545,89 @@
       border-bottom: none;
     }
 
-    .saved-bills-card {
-      width: 100%;
-      grid-column: 1 / -1;
-    }
-
-    html {
-      -webkit-text-size-adjust: 100%;
-    }
-
     @media (max-width: 1024px) {
       .grid {
         grid-template-columns: 1fr;
       }
+
+      .page {
+        max-width: 100%;
+      }
     }
 
     @media (max-width: 760px) {
-      .form-grid,
-      .draft-summary,
-      .stats,
-      .menu-grid {
-        grid-template-columns: 1fr;
-      }
-
       .page {
-        padding: 18px 14px 28px;
+        padding:
+          calc(18px + env(safe-area-inset-top))
+          calc(14px + env(safe-area-inset-right))
+          calc(28px + env(safe-area-inset-bottom))
+          calc(14px + env(safe-area-inset-left));
       }
 
-      .card-header,
+      .title-wrap h1 {
+        font-size: 30px;
+      }
+
+      .title-wrap p {
+        font-size: 16px;
+      }
+
+      .date-badge {
+        font-size: 16px;
+      }
+
+      .card-header {
+        padding: 22px 18px 0;
+      }
+
       .card-body {
-        padding-left: 16px;
-        padding-right: 16px;
+        padding: 18px 18px 22px;
       }
-      .actions {
+
+      .form-grid,
+      .menu-grid,
+      .draft-summary,
+      .stats {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      .draft-box,
+      .stat-box {
+        min-height: auto;
+      }
+
+      .section-title {
         flex-direction: column;
-      }
-
-      .actions button {
-        width: 100%;
-      }
-
-      .menu-grid > button {
-        width: 100%;
+        align-items: flex-start;
+        gap: 8px;
       }
 
       input,
       select,
       button {
-        height: 50px;
-        font-size: 16px;
+        font-size: 17px !important;
+        height: 56px;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .actions button,
+      .menu-grid > button {
+        width: 100%;
       }
 
       table {
-        min-width: 640px;
+        min-width: 680px;
       }
 
       th,
       td {
-        padding: 10px 8px;
-        font-size: 13px;
+        padding: 14px 12px;
+        font-size: 14px;
       }
-
-      input,
-        select,
-        button {
-        font-size: 16px;
-      }
-
     }
   </style>
 </head>
@@ -595,6 +648,7 @@
           <h2>สร้างบิลใหม่</h2>
           <p>กรอกเลขบิล แล้วเพิ่มเมนูอาหารหลายรายการลงในบิลเดียวกัน</p>
         </div>
+
         <div class="card-body">
           <div class="form-grid">
             <div class="field">
@@ -634,10 +688,12 @@
               <div class="draft-label">รายการในบิลปัจจุบัน</div>
               <div class="draft-value" id="draftLines">0</div>
             </div>
+
             <div class="draft-box">
               <div class="draft-label">จำนวนทั้งหมด</div>
               <div class="draft-value" id="draftQty">0</div>
             </div>
+
             <div class="draft-box">
               <div class="draft-label">ยอดรวมบิลปัจจุบัน</div>
               <div class="draft-value" id="draftTotal">0.00</div>
@@ -677,49 +733,29 @@
         </div>
       </div>
 
-      
-<!-- RIGHT -->
-<div class="card">
-  <div class="card-header">
-    <h2>สรุปยอดขาย</h2>
-    <p>กดปุ่ม Summary วันนี้ เพื่อดูสลิปสรุปยอดขายประจำวัน</p>
-  </div>
-  <div class="card-body">
-    <div class="summary-placeholder">
-      ยังไม่แสดงผลอัตโนมัติ<br>
-      ระบบจะเปิดสลิปสรุปเมื่อกดปุ่ม Summary วันนี้
-    </div>
-  </div>
-</div>
+      <!-- RIGHT -->
+      <div class="card">
+        <div class="card-header">
+          <h2>สรุปยอดขาย</h2>
+          <p>กดปุ่ม Summary วันนี้ เพื่อดูสลิปสรุปยอดขายประจำวัน</p>
+        </div>
 
-<!-- SUMMARY MODAL -->
-<div class="summary-modal" id="summaryModal">
-  <div class="summary-overlay" onclick="closeSummaryModal()"></div>
-
-  <div class="summary-slip">
-    <div class="slip-top">
-      <div>
-        <div class="slip-title">สรุปยอดขายประจำวัน</div>
-        <div class="slip-subtitle" id="slipDate">วันที่ -</div>
+        <div class="card-body">
+          <div class="summary-placeholder">
+            ยังไม่แสดงผลอัตโนมัติ<br />
+            ระบบจะเปิดสลิปสรุปเมื่อกดปุ่ม Summary วันนี้
+          </div>
+        </div>
       </div>
-
-      <button type="button" class="slip-close" onclick="closeSummaryModal()">✕</button>
     </div>
-
-    <div class="summary-box-slip" id="summaryBox">
-      ยังไม่มีข้อมูล
-    </div>
-  </div>
-</div>
-</div>
-
 
     <!-- SAVED BILLS -->
-    <div class="card saved-bills-card" style="margin-top: 20px;">
+    <div class="card saved-bills-card">
       <div class="card-header">
         <h2>บิลที่บันทึกไว้</h2>
         <p>แต่ละแถวคือ 1 บิล ซึ่งสามารถมีหลายเมนูอาหาร</p>
       </div>
+
       <div class="card-body">
         <div class="table-wrap">
           <table>
@@ -735,6 +771,26 @@
             <tbody id="savedBillsBody"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY MODAL -->
+  <div class="summary-modal" id="summaryModal">
+    <div class="summary-overlay" onclick="closeSummaryModal()"></div>
+
+    <div class="summary-slip">
+      <div class="slip-top">
+        <div>
+          <div class="slip-title">สรุปยอดขายประจำวัน</div>
+          <div class="slip-subtitle" id="slipDate">วันที่ -</div>
+        </div>
+
+        <button type="button" class="slip-close" onclick="closeSummaryModal()">✕</button>
+      </div>
+
+      <div class="summary-box-slip" id="summaryBox">
+        ยังไม่มีข้อมูล
       </div>
     </div>
   </div>
@@ -818,7 +874,7 @@
 
     function updateSelectedPrice() {
       const foodName = foodItemInput.value;
-      itemPriceInput.value = foodName ? formatMoney(MENU_PRICES[foodName]) + " บาท" : "";
+      itemPriceInput.value = foodName ? `${formatMoney(MENU_PRICES[foodName])} บาท` : "";
     }
 
     function addItemToCurrentBill() {
@@ -922,8 +978,8 @@
       }
 
       const bills = getBills();
-
       const duplicate = bills.find(bill => bill.date === date && bill.billNo === billNo);
+
       if (duplicate) {
         alert("เลขบิลนี้มีอยู่แล้วในวันที่เลือก กรุณาใช้เลขบิลอื่น");
         return;
@@ -943,6 +999,7 @@
 
       billNoInput.value = "";
       currentBillItems = [];
+
       renderCurrentBill();
       renderSavedBills();
 
@@ -963,6 +1020,7 @@
       localStorage.removeItem(STORAGE_KEY);
       currentBillItems = [];
       billNoInput.value = "";
+
       renderCurrentBill();
       renderSavedBills();
     }
@@ -1012,84 +1070,81 @@
       const bills = getBills();
       const todayBills = bills.filter(bill => bill.date === today);
 
-    slipDate.textContent = `วันที่: ${today}`;
+      slipDate.textContent = `วันที่: ${today}`;
 
-    if (todayBills.length === 0) {
-    summaryBox.innerHTML = `
-      <div class="slip-row">
-        <span>วันที่</span>
-        <strong>${today}</strong>
-      </div>
-      <div class="slip-divider"></div>
-      <div style="text-align:center; color:#64748b;">
-        ยังไม่มีข้อมูลยอดขายของวันนี้
-      </div>
-    `;
-
-    summaryModal.classList.add("show");
-    return;
-  }
-
-  const totalSales = todayBills.reduce((sum, bill) => sum + bill.totalAmount, 0);
-  const totalBills = todayBills.length;
-  let totalQty = 0;
-
-  const groupedFood = {};
-
-  todayBills.forEach(bill => {
-    bill.items.forEach(item => {
-      totalQty += item.qty;
-
-      if (!groupedFood[item.foodName]) {
-        groupedFood[item.foodName] = { qty: 0, amount: 0 };
+      if (todayBills.length === 0) {
+        summaryBox.innerHTML = `
+          <div class="slip-row">
+            <span>วันที่</span>
+            <strong>${today}</strong>
+          </div>
+          <div class="slip-divider"></div>
+          <div style="text-align:center; color:#64748b;">
+            ยังไม่มีข้อมูลยอดขายของวันนี้
+          </div>
+        `;
+        summaryModal.classList.add("show");
+        return;
       }
 
-      groupedFood[item.foodName].qty += item.qty;
-      groupedFood[item.foodName].amount += item.lineTotal;
-    });
-  });
+      const totalSales = todayBills.reduce((sum, bill) => sum + bill.totalAmount, 0);
+      const totalBills = todayBills.length;
+      let totalQty = 0;
+      const groupedFood = {};
 
-  const menuSummary = Object.entries(groupedFood)
-    .sort((a, b) => b[1].qty - a[1].qty)
-    .map(([foodName, data]) => `
-      <div class="slip-menu-item">
-        <span>${escapeHTML(foodName)} x ${data.qty}</span>
-        <strong>${formatMoney(data.amount)} บาท</strong>
-      </div>
-    `)
-    .join("");
+      todayBills.forEach(bill => {
+        bill.items.forEach(item => {
+          totalQty += item.qty;
 
-  summaryBox.innerHTML = `
-    <div class="slip-row">
-      <span>ยอดขายรวม</span>
-      <strong>${formatMoney(totalSales)} บาท</strong>
-    </div>
+          if (!groupedFood[item.foodName]) {
+            groupedFood[item.foodName] = { qty: 0, amount: 0 };
+          }
 
-    <div class="slip-row">
-      <span>จำนวนบิล</span>
-      <span>${totalBills} บิล</span>
-    </div>
+          groupedFood[item.foodName].qty += item.qty;
+          groupedFood[item.foodName].amount += item.lineTotal;
+        });
+      });
 
-    <div class="slip-row">
-      <span>จำนวนที่ขายทั้งหมด</span>
-      <span>${totalQty} รายการ</span>
-    </div>
+      const menuSummary = Object.entries(groupedFood)
+        .sort((a, b) => b[1].qty - a[1].qty)
+        .map(([foodName, data]) => `
+          <div class="slip-menu-item">
+            <span>${escapeHTML(foodName)} x ${data.qty}</span>
+            <strong>${formatMoney(data.amount)} บาท</strong>
+          </div>
+        `)
+        .join("");
 
-    <div class="slip-divider"></div>
+      summaryBox.innerHTML = `
+        <div class="slip-row">
+          <span>ยอดขายรวม</span>
+          <strong>${formatMoney(totalSales)} บาท</strong>
+        </div>
 
-    <div class="slip-section-title">สรุปตามเมนู</div>
-    <div class="slip-menu-list">
-      ${menuSummary}
-    </div>
-  `;
+        <div class="slip-row">
+          <span>จำนวนบิล</span>
+          <span>${totalBills} บิล</span>
+        </div>
 
-  summaryModal.classList.add("show");
-}
+        <div class="slip-row">
+          <span>จำนวนที่ขายทั้งหมด</span>
+          <span>${totalQty} รายการ</span>
+        </div>
 
-function closeSummaryModal() {
-  summaryModal.classList.remove("show");
-}
+        <div class="slip-divider"></div>
 
+        <div class="slip-section-title">สรุปตามเมนู</div>
+        <div class="slip-menu-list">
+          ${menuSummary}
+        </div>
+      `;
+
+      summaryModal.classList.add("show");
+    }
+
+    function closeSummaryModal() {
+      summaryModal.classList.remove("show");
+    }
 
     function initializeApp() {
       const today = getToday();
@@ -1101,6 +1156,12 @@ function closeSummaryModal() {
       renderSavedBills();
 
       foodItemInput.addEventListener("change", updateSelectedPrice);
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          closeSummaryModal();
+        }
+      });
     }
 
     initializeApp();
