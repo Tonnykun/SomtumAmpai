@@ -672,7 +672,7 @@
 
             <div class="field">
               <label for="itemPrice">ราคา/หน่วย</label>
-              <input type="text" id="itemPrice" placeholder="ราคาอัตโนมัติ" readonly />
+              <input type="number" id="itemPrice" placeholder="ราคาอัตโนมัติ" min="0" step="0.01" readonly />
             </div>
 
             <div class="field">
@@ -807,6 +807,7 @@
       "ต้มยำ": 80,
       "น้ำเปล่า": 10,
       "น้ำอัดลม": 20
+      "GrabFood": null
     };
 
     const saleDateInput = document.getElementById("saleDate");
@@ -874,13 +875,32 @@
 
     function updateSelectedPrice() {
       const foodName = foodItemInput.value;
-      itemPriceInput.value = foodName ? `${formatMoney(MENU_PRICES[foodName])} บาท` : "";
+
+      if (!foodName) {
+        itemPriceInput.value = "";
+        itemPriceInput.placeholder = "ราคาอัตโนมัติ";
+        itemPriceInput.readOnly = true;
+        return;
+      }
+
+      if (foodName === "GrabFood") {
+        itemPriceInput.value = "";
+        itemPriceInput.placeholder = "กรอกราคาเอง";
+        itemPriceInput.readOnly = false;
+        itemPriceInput.focus();
+        return;
+      }
+
+      itemPriceInput.value = MENU_PRICES[foodName];
+      itemPriceInput.placeholder = "ราคาอัตโนมัติ";
+      itemPriceInput.readOnly = true;
     }
 
     function addItemToCurrentBill() {
       const foodName = foodItemInput.value;
       const qty = parseInt(itemQtyInput.value, 10);
-      const price = MENU_PRICES[foodName];
+
+      let price;
 
       if (!foodName) {
         alert("กรุณาเลือกรายการอาหาร");
@@ -892,7 +912,20 @@
         return;
       }
 
-      const existingItem = currentBillItems.find(item => item.foodName === foodName);
+      if (foodName === "GrabFood") {
+        price = parseFloat(itemPriceInput.value);
+
+        if (isNaN(price) || price <= 0) {
+          alert("กรุณากรอกราคา GrabFood ให้ถูกต้อง");
+          return;
+        }
+      } else {
+        price = MENU_PRICES[foodName];
+      }
+
+      const existingItem = currentBillItems.find(
+        item => item.foodName === foodName && item.price === price
+      );
 
       if (existingItem) {
         existingItem.qty += qty;
@@ -908,6 +941,8 @@
 
       foodItemInput.value = "";
       itemPriceInput.value = "";
+      itemPriceInput.placeholder = "ราคาอัตโนมัติ";
+      itemPriceInput.readOnly = true;
       itemQtyInput.value = 1;
 
       renderCurrentBill();
