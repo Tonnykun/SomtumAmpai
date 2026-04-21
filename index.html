@@ -2,781 +2,251 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ระบบบันทึกยอดขาย</title>
-
-  <style>
-    :root {
-      --bg: #05070b;
-      --card: #ffffff;
-      --line: #e5e7eb;
-      --line-soft: #edf2f7;
-      --text: #111827;
-      --muted: #6b7280;
-
-      --primary: #3f66e0;
-      --primary-hover: #3154c4;
-
-      --success: #4ea956;
-      --success-hover: #3f9347;
-
-      --warning: #e8a33a;
-      --warning-hover: #d59126;
-
-      --soft-warning: #f1e29a;
-      --soft-danger: #f6dada;
-      --danger-text: #d44136;
-
-      --shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
-      --radius: 24px;
-    }
-
-    * {
-      box-sizing: border-box;
-      font-family: "Segoe UI", Tahoma, sans-serif;
-    }
-
-    html {
-      -webkit-text-size-adjust: 100%;
-    }
-
-    body {
-      margin: 0;
-      background:
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.16), transparent 18%),
-        linear-gradient(180deg, #2d2d2d 0%, #0b0f18 12%, #05070b 34%, #000000 100%);
-      color: var(--text);
-    }
-
-    .page {
-      max-width: 1040px;
-      margin: 0 auto;
-      padding:
-        calc(20px + env(safe-area-inset-top))
-        calc(16px + env(safe-area-inset-right))
-        calc(36px + env(safe-area-inset-bottom))
-        calc(16px + env(safe-area-inset-left));
-    }
-
-    .summary-date-field {
-      margin-bottom: 14px;
-    }
-
-    .summary-date-field input {
-      width: 100%;
-    }
-
-    .topbar {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-
-    .title-wrap h1 {
-      margin: 0;
-      font-size: clamp(28px, 6vw, 40px);
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-      color: #ffffff;
-    }
-
-    .title-wrap p {
-      margin: 6px 0 0;
-      max-width: 760px;
-      color: rgba(255, 255, 255, 0.75);
-      font-size: 15px;
-      line-height: 1.7;
-    }
-
-    .date-badge {
-      background: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      padding: 12px 16px;
-      font-size: 16px;
-      font-weight: 700;
-      color: #475569;
-      white-space: nowrap;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1.35fr 1fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid rgba(229, 231, 235, 0.95);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .saved-bills-card {
-      width: 100%;
-      margin-top: 20px;
-    }
-
-    .card-header {
-      padding: 24px 24px 0;
-    }
-
-    .card-header h2 {
-      margin: 0 0 6px;
-      font-size: 30px;
-      line-height: 1.1;
-      color: #111827;
-    }
-
-    .card-header p {
-      margin: 0;
-      font-size: 15px;
-      line-height: 1.65;
-      color: var(--muted);
-    }
-
-    .card-body {
-      padding: 20px 24px 24px;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      margin-bottom: 16px;
-    }
-
-    .menu-grid {
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr auto;
-      gap: 14px;
-      align-items: end;
-      margin-bottom: 18px;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    label {
-      font-size: 15px;
-      font-weight: 700;
-      color: #374151;
-    }
-
-    input,
-    select {
-      width: 100%;
-      height: 56px;
-      padding: 0 16px;
-      border: 1px solid #d1d5db;
-      border-radius: 16px;
-      background: #fff;
-      font-size: 17px;
-      color: var(--text);
-      transition: 0.2s ease;
-      touch-action: manipulation;
-      appearance: none;
-      -webkit-appearance: none;
-    }
-
-    input:focus,
-    select:focus {
-      outline: none;
-      border-color: #93c5fd;
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
-    }
-
-    input[readonly] {
-      background: #f8fafc;
-      color: #6b7280;
-    }
-
-    button {
-      border: none;
-      border-radius: 16px;
-      padding: 14px 18px;
-      min-height: 56px;
-      font-size: 17px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: 0.2s ease;
-      touch-action: manipulation;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-    }
-
-    .btn-add {
-      background: var(--warning);
-      color: #ffffff;
-      height: 56px;
-    }
-
-    .btn-add:hover {
-      background: var(--warning-hover);
-    }
-
-    .btn-save {
-      background: var(--success);
-      color: #ffffff;
-    }
-
-    .btn-save:hover {
-      background: var(--success-hover);
-    }
-
-    .btn-summary {
-      background: var(--primary);
-      color: #ffffff;
-    }
-
-    .btn-summary:hover {
-      background: var(--primary-hover);
-    }
-
-    .btn-clear {
-      background: var(--soft-warning);
-      color: #9a5c08;
-    }
-
-    .btn-clear:hover {
-      background: #ead775;
-    }
-
-    .btn-delete-all {
-      background: var(--soft-danger);
-      color: var(--danger-text);
-    }
-
-    .btn-delete-all:hover {
-      background: #f1c8c8;
-    }
-
-    .btn-delete {
-      background: #fee2e2;
-      color: #b91c1c;
-      padding: 10px 14px;
-      min-height: auto;
-      font-size: 14px;
-      border-radius: 12px;
-    }
-
-    .btn-delete:hover {
-      background: #fecaca;
-    }
-
-    .actions {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-
-    .draft-summary,
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
-    .draft-box,
-    .stat-box {
-      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 18px;
-      min-height: 112px;
-    }
-
-    .draft-label,
-    .stat-label {
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 10px;
-      line-height: 1.5;
-    }
-
-    .draft-value,
-    .stat-value {
-      font-size: clamp(28px, 6vw, 42px);
-      font-weight: 800;
-      line-height: 1.05;
-      color: #111827;
-    }
-
-    .section-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin: 18px 0 12px;
-    }
-
-    .section-title h3 {
-      margin: 0;
-      font-size: 20px;
-      color: #111827;
-    }
-
-    .section-title span {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      border: 1px solid var(--line-soft);
-      border-radius: 18px;
-      background: #fff;
-    }
-
-    table {
-      width: 100%;
-      min-width: 760px;
-      border-collapse: collapse;
-    }
-
-    th,
-    td {
-      padding: 14px 12px;
-      text-align: left;
-      border-bottom: 1px solid #eef2f7;
-      vertical-align: top;
-    }
-
-    th {
-      background: #f8fafc;
-      color: #64748b;
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    td {
-      color: #1f2937;
-      background: #fff;
-      font-size: 15px;
-    }
-
-    .amount {
-      font-weight: 800;
-      color: #111827;
-      white-space: nowrap;
-    }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      padding: 7px 11px;
-      border-radius: 999px;
-      background: #eef2ff;
-      color: #3730a3;
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .food-lines {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .food-line {
-      background: #f8fafc;
-      border: 1px solid #edf2f7;
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    .empty {
-      text-align: center;
-      padding: 32px 14px;
-      color: var(--muted);
-      font-size: 15px;
-    }
-
-    .hint {
-      margin-top: 14px;
-      font-size: 14px;
-      line-height: 1.7;
-      color: var(--muted);
-    }
-
-    .summary-placeholder {
-      border: 1px dashed #cbd5e1;
-      background: #f8fafc;
-      border-radius: 18px;
-      padding: 34px 20px;
-      text-align: center;
-      color: #64748b;
-      line-height: 1.8;
-      font-size: 16px;
-    }
-
-    .summary-modal {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      z-index: 9999;
-    }
-
-    .summary-modal.show {
-      display: flex;
-    }
-
-    .summary-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.5);
-      backdrop-filter: blur(3px);
-    }
-
-    .summary-slip {
-      position: relative;
-      z-index: 1;
-      width: min(460px, calc(100vw - 24px));
-      max-height: 85vh;
-      overflow-y: auto;
-      background: #ffffff;
-      border-radius: 24px;
-      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
-      border: 1px solid #e5e7eb;
-      padding: 20px;
-    }
-
-    .slip-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      padding-bottom: 14px;
-      margin-bottom: 14px;
-      border-bottom: 1px dashed #cbd5e1;
-    }
-
-    .slip-title {
-      font-size: 24px;
-      font-weight: 800;
-      color: #0f172a;
-    }
-
-    .slip-subtitle {
-      margin-top: 4px;
-      font-size: 14px;
-      color: #64748b;
-    }
-
-    .slip-close {
-      width: 42px;
-      min-height: 42px;
-      height: 42px;
-      padding: 0;
-      border-radius: 12px;
-      background: #f1f5f9;
-      color: #334155;
-      font-size: 16px;
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .slip-close:hover {
-      background: #e2e8f0;
-    }
-
-    .summary-box-slip {
-      font-size: 15px;
-      line-height: 1.8;
-      color: #0f172a;
-    }
-
-    .slip-divider {
-      border-top: 1px dashed #cbd5e1;
-      margin: 12px 0;
-    }
-
-    .slip-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 6px;
-    }
-
-    .slip-row span:last-child,
-    .slip-row strong {
-      white-space: nowrap;
-    }
-
-    .slip-section-title {
-      font-weight: 800;
-      margin: 10px 0 8px;
-    }
-
-    .slip-menu-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .slip-menu-item {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 14px;
-      padding: 7px 0;
-      border-bottom: 1px dashed #e2e8f0;
-    }
-
-    .slip-menu-item:last-child {
-      border-bottom: none;
-    }
-
-    @media (max-width: 1024px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .page {
-        max-width: 100%;
-      }
-    }
-
-    @media (max-width: 760px) {
-      .page {
-        padding:
-          calc(18px + env(safe-area-inset-top))
-          calc(14px + env(safe-area-inset-right))
-          calc(28px + env(safe-area-inset-bottom))
-          calc(14px + env(safe-area-inset-left));
-      }
-
-      .title-wrap h1 {
-        font-size: 30px;
-      }
-
-      .title-wrap p {
-        font-size: 16px;
-      }
-
-      .date-badge {
-        font-size: 16px;
-      }
-
-      .card-header {
-        padding: 22px 18px 0;
-      }
-
-      .card-body {
-        padding: 18px 18px 22px;
-      }
-
-      .form-grid,
-      .menu-grid,
-      .draft-summary,
-      .stats {
-        grid-template-columns: 1fr;
-        gap: 14px;
-      }
-
-      .draft-box,
-      .stat-box {
-        min-height: auto;
-      }
-
-      .section-title {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
-
-      input,
-      select,
-      button {
-        font-size: 17px !important;
-        height: 56px;
-      }
-
-      .actions {
-        flex-direction: column;
-      }
-
-      .actions button,
-      .menu-grid > button {
-        width: 100%;
-      }
-
-      table {
-        min-width: 680px;
-      }
-
-      th,
-      td {
-        padding: 14px 12px;
-        font-size: 14px;
-      }
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+  <!-- Toast container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Page -->
   <div class="page">
-    <div class="topbar">
-      <div class="title-wrap">
-        <h1>ระบบบันทึกยอดขาย</h1>
-        <p>1 บิลสามารถมีหลายเมนู และคำนวณยอดรวมให้อัตโนมัติ</p>
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="app-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" stroke-width="2"/>
+            <path d="M9 12h6M9 16h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="app-title">ร้านส้มตำเจ้อำไพ</h1>
+          <p class="app-subtitle">ระบบบันทึกยอดขายส้มตำเจ้อำไพ · ทรายมูล</p>
+        </div>
       </div>
-      <div class="date-badge" id="todayBadge">วันนี้:</div>
+      <div class="date-pill" id="todayBadge">—</div>
+    </header>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-chip">
+        <span class="stat-chip-label">บิลวันนี้</span>
+        <span class="stat-chip-value" id="statTodayBills">0</span>
+      </div>
+      <div class="stat-chip">
+        <span class="stat-chip-label">ยอดวันนี้</span>
+        <span class="stat-chip-value" id="statTodaySales">฿0</span>
+      </div>
+      <div class="stat-chip stat-chip--accent">
+        <span class="stat-chip-label">บิลทั้งหมด</span>
+        <span class="stat-chip-value" id="statTotalBills">0</span>
+      </div>
     </div>
 
+    <!-- Two-column grid -->
     <div class="grid">
-      <!-- LEFT -->
-      <div class="card">
+
+      <!-- LEFT: Create Bill -->
+      <section class="card" id="createCard">
         <div class="card-header">
-          <h2>สร้างบิลใหม่</h2>
-          <p>กรอกเลขบิล แล้วเพิ่มเมนูอาหารหลายรายการลงในบิลเดียวกัน</p>
+          <div class="card-header-icon card-header-icon--green">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="card-title">สร้างบิลใหม่</h2>
+            <p class="card-desc">กรอกเลขบิล แล้วเพิ่มเมนูได้หลายรายการ</p>
+          </div>
         </div>
 
         <div class="card-body">
-          <div class="form-grid">
+          <!-- Date + Bill No -->
+          <div class="field-row">
             <div class="field">
-              <label for="saleDate">วันที่</label>
-              <input type="date" id="saleDate" />
+              <label class="field-label" for="saleDate">วันที่</label>
+              <input class="field-input" type="date" id="saleDate" />
             </div>
-
             <div class="field">
-              <label for="billNo">บิลที่</label>
-              <input type="text" id="billNo" placeholder="เช่น 1, 2, A01, 1001" />
-            </div>
-          </div>
-            
-            <div class="field">
-              <label for="salesChannel">ช่องทางขาย</label>
-              <select id="salesChannel">
-                <option value="store">หน้าร้าน</option>
-                <option value="grabfood">GrabFood</option>
-              </select>
-            </div>
-
-          <div class="menu-grid">
-            <div class="field">
-              <label for="foodItem">รายการอาหาร</label>
-              <select id="foodItem">
-                <option value="">-- เลือกรายการอาหาร --</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="itemPrice">ราคา/หน่วย</label>
-              <input type="number" id="itemPrice" placeholder="ราคาอัตโนมัติ" min="0" step="0.01" readonly />
-            </div>
-
-            <div class="field">
-              <label for="itemQty">จำนวน</label>
-              <input type="number" id="itemQty" min="1" value="1" />
-            </div>
-
-            <button class="btn-add" onclick="addItemToCurrentBill()">เพิ่มเข้าบิล</button>
-          </div>
-
-          <div class="draft-summary">
-            <div class="draft-box">
-              <div class="draft-label">รายการในบิลปัจจุบัน</div>
-              <div class="draft-value" id="draftLines">0</div>
-            </div>
-
-            <div class="draft-box">
-              <div class="draft-label">จำนวนทั้งหมด</div>
-              <div class="draft-value" id="draftQty">0</div>
-            </div>
-
-            <div class="draft-box">
-              <div class="draft-label">ยอดรวมบิลปัจจุบัน</div>
-              <div class="draft-value" id="draftTotal">0.00</div>
+              <label class="field-label" for="billNo">เลขบิล</label>
+              <input class="field-input" type="text" id="billNo" placeholder="เช่น 1, A01" />
             </div>
           </div>
 
-          <div class="section-title">
-            <h3>รายการในบิลปัจจุบัน</h3>
-            <span>เพิ่มหลายเมนูได้ก่อนกดบันทึกบิล</span>
+          <!-- Channel -->
+          <div class="field" style="margin-bottom: 16px;">
+            <label class="field-label" for="salesChannel">ช่องทางขาย</label>
+            <div class="segmented-control">
+              <button class="seg-btn active" data-value="store" id="segStore" onclick="setChannel('store')">
+                <span class="seg-icon">🏪</span> หน้าร้าน
+              </button>
+              <button class="seg-btn" data-value="grabfood" id="segGrab" onclick="setChannel('grabfood')">
+                <span class="seg-icon">🛵</span> GrabFood
+              </button>
+            </div>
+            <input type="hidden" id="salesChannel" value="store" />
           </div>
 
-          <div class="table-wrap" style="margin-bottom: 16px;">
+          <!-- Divider -->
+          <div class="section-label">เพิ่มเมนู</div>
+
+          <!-- Menu row -->
+          <div class="menu-row">
+            <div class="field flex-2">
+              <label class="field-label" for="foodItem">รายการอาหาร</label>
+              <div class="select-wrap">
+                <select class="field-input" id="foodItem">
+                  <option value="">-- เลือกเมนู --</option>
+                </select>
+                <span class="select-arrow">›</span>
+              </div>
+            </div>
+            <div class="field flex-1">
+              <label class="field-label" for="itemPrice">ราคา/หน่วย</label>
+              <div class="price-display" id="itemPrice">—</div>
+            </div>
+            <div class="field flex-1">
+              <label class="field-label" for="itemQty">จำนวน</label>
+              <div class="qty-control">
+                <button class="qty-btn" onclick="adjustQty(-1)">−</button>
+                <input class="qty-input" type="number" id="itemQty" min="1" value="1" />
+                <button class="qty-btn" onclick="adjustQty(1)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-add" onclick="addItemToCurrentBill()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+            เพิ่มเข้าบิล
+          </button>
+
+          <!-- Draft summary chips -->
+          <div class="draft-chips">
+            <div class="draft-chip">
+              <span class="draft-chip-label">เมนู</span>
+              <span class="draft-chip-val" id="draftLines">0</span>
+            </div>
+            <div class="draft-chip">
+              <span class="draft-chip-label">จำนวน</span>
+              <span class="draft-chip-val" id="draftQty">0</span>
+            </div>
+            <div class="draft-chip draft-chip--total">
+              <span class="draft-chip-label">ยอดรวม</span>
+              <span class="draft-chip-val" id="draftTotal">฿0.00</span>
+            </div>
+          </div>
+
+          <!-- Bill table -->
+          <div class="section-label" style="margin-top:4px;">รายการในบิลปัจจุบัน</div>
+          <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>รายการอาหาร</th>
-                  <th>ราคา/หน่วย</th>
-                  <th>จำนวน</th>
-                  <th>รวม</th>
-                  <th>จัดการ</th>
+                  <th>รายการ</th>
+                  <th class="num">ราคา</th>
+                  <th class="num">จำนวน</th>
+                  <th class="num">รวม</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="currentBillBody"></tbody>
             </table>
           </div>
 
+          <!-- Actions -->
           <div class="actions">
-            <button class="btn-save" onclick="saveCurrentBill()">บันทึกบิล</button>
-            <button class="btn-summary" onclick="showTodaySummary()">Summary ตามวันที่</button>
-            <button class="btn-clear" onclick="clearCurrentBill()">ล้างบิลปัจจุบัน</button>
-            <button class="btn-delete-all" onclick="clearAllBills()">ลบข้อมูลทั้งหมด</button>
+            <button class="btn btn-primary" onclick="saveCurrentBill()">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" stroke="currentColor" stroke-width="2"/>
+                <polyline points="17 21 17 13 7 13 7 21" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              บันทึกบิล
+            </button>
+            <button class="btn btn-ghost" onclick="clearCurrentBill()">
+              ล้างบิล
+            </button>
           </div>
 
-          <div class="hint">
-            แก้ชื่อเมนูและราคาได้จากตัวแปร <strong>MENU_PRICES</strong> ใน JavaScript ด้านล่าง
+          <div class="hint-text">
+            แก้เมนูและราคาได้ที่ตัวแปร <code>PRICE_TABLE</code> ใน script.js
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- RIGHT -->
-      <div class="card">
+      <!-- RIGHT: Summary -->
+      <section class="card" id="summaryCard">
         <div class="card-header">
-          <h2>สรุปยอดขาย</h2>
-          <p>กดปุ่ม Summary วันนี้ เพื่อดูสลิปสรุปยอดขายประจำวัน</p>
+          <div class="card-header-icon card-header-icon--blue">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="card-title">สรุปยอดขาย</h2>
+            <p class="card-desc">ดูสลิปสรุปรายวัน</p>
+          </div>
         </div>
-
         <div class="card-body">
           <div class="field summary-date-field">
-            <label for="summaryDate">เลือกวันที่สรุป</label>
-            <input type="date" id="summaryDate" />
+            <label class="field-label" for="summaryDate">เลือกวันที่สรุป</label>
+            <input class="field-input" type="date" id="summaryDate" />
           </div>
-            <button class="btn-summary" style="width:100%; margin-bottom:14px;" onclick="showTodaySummary()">
-            Summary เลือกวันที่
-            </button>
-          <div class="summary-placeholder">
-            เลือกวันที่ก่อน แล้วกดปุ่ม Summary เพื่อดูสลิปสรุปยอดขาย
+          <button class="btn btn-primary" style="width:100%;" onclick="showTodaySummary()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+              <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            ดูสรุปวันที่เลือก
+          </button>
+
+          <div class="summary-placeholder" id="summaryPlaceholder">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style="margin-bottom:10px;opacity:.35">
+              <path d="M9 17H7A5 5 0 017 7h1M15 7h2a5 5 0 010 10h-1M8 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <div>เลือกวันที่ แล้วกดดูสรุป</div>
           </div>
         </div>
-      </div>
 
-    <!-- SAVED BILLS -->
-    <div class="card saved-bills-card">
+        <!-- Danger zone -->
+        <div class="danger-zone">
+          <button class="btn btn-danger-ghost" onclick="clearAllBills()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            ลบข้อมูลทั้งหมด
+          </button>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Saved Bills -->
+    <section class="card saved-bills-card">
       <div class="card-header">
-        <h2>บิลที่บันทึกไว้</h2>
-        <p>แต่ละแถวคือ 1 บิล ซึ่งสามารถมีหลายเมนูอาหาร</p>
+        <div class="card-header-icon card-header-icon--purple">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" stroke-width="2"/>
+            <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="card-title">บิลที่บันทึกไว้</h2>
+          <p class="card-desc">แต่ละแถวคือ 1 บิล เรียงล่าสุดก่อน</p>
+        </div>
       </div>
-
       <div class="card-body">
         <div class="table-wrap">
           <table>
@@ -784,465 +254,36 @@
               <tr>
                 <th>วันที่</th>
                 <th>บิลที่</th>
-                <th>รายการอาหารในบิล</th>
-                <th>ยอดรวมบิล</th>
-                <th>จัดการ</th>
+                <th>รายการ</th>
+                <th class="num">ยอดรวม</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="savedBillsBody"></tbody>
           </table>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- SUMMARY MODAL -->
-  <div class="summary-modal" id="summaryModal">
-    <div class="summary-overlay" onclick="closeSummaryModal()"></div>
+  </div><!-- /page -->
 
-    <div class="summary-slip">
-      <div class="slip-top">
-        <div>
-          <div class="slip-title">สรุปยอดขายประจำวัน</div>
-          <div class="slip-subtitle" id="slipDate">วันที่ -</div>
+  <!-- Summary Modal -->
+  <div class="modal-backdrop" id="summaryModal" onclick="handleBackdropClick(event)">
+    <div class="modal-sheet" id="summarySheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-inner">
+        <div class="sheet-header">
+          <div>
+            <div class="sheet-title">สรุปยอดขายประจำวัน</div>
+            <div class="sheet-subtitle" id="slipDate">—</div>
+          </div>
+          <button class="sheet-close" onclick="closeSummaryModal()">✕</button>
         </div>
-
-        <button type="button" class="slip-close" onclick="closeSummaryModal()">✕</button>
-      </div>
-
-      <div class="summary-box-slip" id="summaryBox">
-        ยังไม่มีข้อมูล
+        <div class="sheet-body" id="summaryBox">—</div>
       </div>
     </div>
   </div>
 
-  <script>
-    const STORAGE_KEY = "salesBillsDataV2";
-
-    // แก้เมนูและราคาได้ตรงนี้
-    const PRICE_TABLE = {
-      store: {
-        "ขนมจีน": 25,
-        "ขนมจีนเปล่า": 5,
-        "แคบหมู": 5,
-        "ตำปูปลาร้า": 40,
-        "ตำไทย": 40,
-        "ตำแตงหมูยอ": 50,
-        "ตำข้าวโพดไข่เค็ม": 60,
-        "ตำถั่ว": 60,
-        "ตำซั่ว": 50,
-        "ตำมะม่วง": 30,
-        "ยำหมูยอ": 50,
-        "ยำคอหมูย่าง": 60,
-        "น้ำแตงโมปั่น": 20,
-        "น้ำสัปปะรดปั่น": 20,
-        "น้ำส้มปั่น": 25,
-        "น้ำมะพร้าวปั่น": 40,
-      },
-      grabfood: {
-        "ขนมจีน": 35,
-        "ขนมจีนเปล่า": 10,
-        "แคบหมู": 10,
-        "ตำปูปลาร้า": 50,
-        "ตำไทย": 50,
-        "ตำแตงหมูยอ": 60,
-        "ตำข้าวโพดไข่เค็ม": 60,
-        "ตำถั่ว": 69,
-        "ตำซั่ว": 60,
-        "ตำมะม่วง": 60,
-        "ยำหมูยอ": 60,
-        "ยำคอหมูย่าง": 60,
-        "น้ำแตงโมปั่น": 30,
-        "น้ำสัปปะรดปั่น": 30,
-        "น้ำส้มปั่น": 40,
-        "น้ำมะพร้าวปั่น": 50,
-      }
-    };
-
-    const saleDateInput = document.getElementById("saleDate");
-    const billNoInput = document.getElementById("billNo");
-    const salesChannelInput = document.getElementById("salesChannel");
-    const foodItemInput = document.getElementById("foodItem");
-    const itemPriceInput = document.getElementById("itemPrice");
-    const itemQtyInput = document.getElementById("itemQty");
-    const summaryDateInput = document.getElementById("summaryDate");
-
-    const currentBillBody = document.getElementById("currentBillBody");
-    const savedBillsBody = document.getElementById("savedBillsBody");
-
-    const draftLinesEl = document.getElementById("draftLines");
-    const draftQtyEl = document.getElementById("draftQty");
-    const draftTotalEl = document.getElementById("draftTotal");
-
-    const summaryModal = document.getElementById("summaryModal");
-    const slipDate = document.getElementById("slipDate");
-    const summaryBox = document.getElementById("summaryBox");
-    const todayBadge = document.getElementById("todayBadge");
-
-    let currentBillItems = [];
-
-    function formatDateForInput(date) {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, "0");
-      const d = String(date.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`;
-    }
-
-    function getToday() {
-      return formatDateForInput(new Date());
-    }
-
-    function formatMoney(amount) {
-      return Number(amount).toLocaleString("th-TH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-    }
-
-    function escapeHTML(str = "") {
-      return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function getBills() {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    }
-
-    function saveBills(data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    }
-
-    function renderFoodOptions() {
-      const channel = salesChannelInput.value;
-      const menuList = PRICE_TABLE[channel] || {};
-
-      const options = Object.keys(menuList)
-        .map(name => `<option value="${name}">${name}</option>`)
-        .join("");
-
-      foodItemInput.innerHTML = `<option value="">-- เลือกรายการอาหาร --</option>${options}`;
-    }
-
-    function updateSelectedPrice() {
-      const channel = salesChannelInput.value;
-      const foodName = foodItemInput.value;
-
-      if (!foodName) {
-        itemPriceInput.value = "";
-        return;
-      }
-
-      const price = PRICE_TABLE[channel]?.[foodName];
-
-      itemPriceInput.value = price ?? "";
-    }
-
-    function addItemToCurrentBill() {
-      const channel = salesChannelInput.value;
-      const foodName = foodItemInput.value;
-      const qty = parseInt(itemQtyInput.value, 10);
-
-      if (!foodName) {
-        alert("กรุณาเลือกรายการอาหาร");
-        return;
-      }
-
-      if (!qty || qty <= 0) {
-        alert("กรุณากรอกจำนวนให้ถูกต้อง");
-        return;
-      }
-
-      const price = PRICE_TABLE[channel]?.[foodName];
-
-      if (price == null) {
-        alert("ไม่พบราคาของเมนูนี้");
-        return;
-      }
-
-      const existingItem = currentBillItems.find(
-        item =>
-          item.foodName === foodName &&
-          item.price === price &&
-          item.channel === channel
-      );
-
-      if (existingItem) {
-        existingItem.qty += qty;
-        existingItem.lineTotal = existingItem.qty * existingItem.price;
-      } else {
-        currentBillItems.push({
-          channel: salesChannelInput.value,
-          foodName,
-          price,
-          qty,
-          lineTotal: price * qty
-        });
-      }
-
-      foodItemInput.value = "";
-      itemPriceInput.value = "";
-      itemQtyInput.value = 1;
-
-      renderCurrentBill();
-    }
-
-    function removeCurrentBillItem(foodName) {
-      currentBillItems = currentBillItems.filter(item => item.foodName !== foodName);
-      renderCurrentBill();
-    }
-
-    function clearCurrentBill(askConfirm = true) {
-      if (askConfirm && currentBillItems.length > 0) {
-        const ok = confirm("ต้องการล้างรายการในบิลปัจจุบันใช่หรือไม่?");
-        if (!ok) return;
-      }
-
-      currentBillItems = [];
-      renderCurrentBill();
-    }
-
-    function renderCurrentBill() {
-      if (currentBillItems.length === 0) {
-        currentBillBody.innerHTML = `
-          <tr>
-            <td colspan="5" class="empty">ยังไม่มีรายการในบิลปัจจุบัน</td>
-          </tr>
-        `;
-      } else {
-        currentBillBody.innerHTML = currentBillItems.map(item => `
-          <tr>
-            <td>${item.channel === "grabfood" ? "GrabFood" : "หน้าร้าน"} - ${escapeHTML(item.foodName)}</td>
-            <td>${formatMoney(item.price)} บาท</td>
-            <td>${item.qty}</td>
-            <td class="amount">${formatMoney(item.lineTotal)} บาท</td>
-            <td>
-              <button class="btn-delete" onclick="removeCurrentBillItem('${item.foodName.replace(/'/g, "\\'")}')">ลบ</button>
-            </td>
-          </tr>
-        `).join("");
-      }
-
-      const totalLines = currentBillItems.length;
-      const totalQty = currentBillItems.reduce((sum, item) => sum + item.qty, 0);
-      const totalAmount = currentBillItems.reduce((sum, item) => sum + item.lineTotal, 0);
-
-      draftLinesEl.textContent = totalLines;
-      draftQtyEl.textContent = totalQty;
-      draftTotalEl.textContent = formatMoney(totalAmount);
-    }
-
-    function saveCurrentBill() {
-      const date = saleDateInput.value;
-      const billNo = billNoInput.value.trim();
-
-      if (!date) {
-        alert("กรุณาเลือกวันที่");
-        return;
-      }
-
-      if (!billNo) {
-        alert("กรุณากรอกเลขบิล");
-        return;
-      }
-
-      if (currentBillItems.length === 0) {
-        alert("กรุณาเพิ่มรายการอาหารอย่างน้อย 1 รายการ");
-        return;
-      }
-
-      const bills = getBills();
-      const duplicate = bills.find(bill => bill.date === date && bill.billNo === billNo);
-
-      if (duplicate) {
-        alert("เลขบิลนี้มีอยู่แล้วในวันที่เลือก กรุณาใช้เลขบิลอื่น");
-        return;
-      }
-
-      const totalAmount = currentBillItems.reduce((sum, item) => sum + item.lineTotal, 0);
-
-      bills.push({
-        id: Date.now() + Math.floor(Math.random() * 1000),
-        date,
-        billNo,
-        items: [...currentBillItems],
-        totalAmount
-      });
-
-      saveBills(bills);
-
-      billNoInput.value = "";
-      currentBillItems = [];
-
-      renderCurrentBill();
-      renderSavedBills();
-
-      alert("บันทึกบิลเรียบร้อย");
-    }
-
-    function deleteBill(id) {
-      const bills = getBills();
-      const updatedBills = bills.filter(bill => bill.id !== id);
-      saveBills(updatedBills);
-      renderSavedBills();
-    }
-
-    function clearAllBills() {
-      const ok = confirm("ต้องการลบข้อมูลทั้งหมดใช่หรือไม่?");
-      if (!ok) return;
-
-      localStorage.removeItem(STORAGE_KEY);
-      currentBillItems = [];
-      billNoInput.value = "";
-
-      renderCurrentBill();
-      renderSavedBills();
-    }
-
-    function renderSavedBills() {
-      const bills = getBills();
-
-      if (bills.length === 0) {
-        savedBillsBody.innerHTML = `
-          <tr>
-            <td colspan="5" class="empty">ยังไม่มีบิลที่บันทึกไว้</td>
-          </tr>
-        `;
-        return;
-      }
-
-      const sortedBills = [...bills].sort((a, b) => {
-        if (a.date === b.date) return b.id - a.id;
-        return new Date(b.date) - new Date(a.date);
-      });
-
-      savedBillsBody.innerHTML = sortedBills.map(bill => {
-        const itemsHtml = bill.items.map(item => `
-          <div class="food-line">
-            ${item.channel === "grabfood" ? "GrabFood" : "หน้าร้าน"} - ${escapeHTML(item.foodName)} × ${item.qty}
-            (${formatMoney(item.price)} บาท)
-            = <strong>${formatMoney(item.lineTotal)} บาท</strong>
-          </div>
-        `).join("");
-
-        return `
-          <tr>
-            <td>${bill.date}</td>
-            <td><span class="tag">บิล ${escapeHTML(bill.billNo)}</span></td>
-            <td><div class="food-lines">${itemsHtml}</div></td>
-            <td class="amount">${formatMoney(bill.totalAmount)} บาท</td>
-            <td>
-              <button class="btn-delete" onclick="deleteBill(${bill.id})">ลบ</button>
-            </td>
-          </tr>
-        `;
-      }).join("");
-    }
-
-    function showTodaySummary() {
-      const selectedDate = summaryDateInput.value || getToday();
-      const bills = getBills();
-      const selectedBills = bills.filter(bill => bill.date === selectedDate);
-
-      slipDate.textContent = `วันที่: ${selectedDate}`;
-
-      if (selectedBills.length === 0) {
-        summaryBox.innerHTML = `
-          <div class="slip-row">
-            <span>วันที่</span>
-            <strong>${selectedDate}</strong>
-          </div>
-          <div class="slip-divider"></div>
-          <div style="text-align:center; color:#64748b;">
-            ยังไม่มีข้อมูลยอดขายของวันที่นี้
-          </div>
-        `;
-        summaryModal.classList.add("show");
-        return;
-      }
-
-      const totalSales = selectedBills.reduce((sum, bill) => sum + bill.totalAmount, 0);
-      const totalBills = selectedBills.length;
-      let totalQty = 0;
-      const groupedFood = {};
-
-      selectedBills.forEach(bill => {
-        bill.items.forEach(item => {
-          totalQty += item.qty;
-
-          if (!groupedFood[item.foodName]) {
-            groupedFood[item.foodName] = { qty: 0, amount: 0 };
-          }
-
-          groupedFood[item.foodName].qty += item.qty;
-          groupedFood[item.foodName].amount += item.lineTotal;
-        });
-      });
-
-      const menuSummary = Object.entries(groupedFood)
-        .sort((a, b) => b[1].qty - a[1].qty)
-        .map(([foodName, data]) => `
-          <div class="slip-menu-item">
-            <span>${escapeHTML(foodName)} x ${data.qty}</span>
-            <strong>${formatMoney(data.amount)} บาท</strong>
-          </div>
-        `)
-        .join("");
-
-      summaryBox.innerHTML = `
-        <div class="slip-row">
-          <span>ยอดขายรวม</span>
-          <strong>${formatMoney(totalSales)} บาท</strong>
-        </div>
-
-        <div class="slip-row">
-          <span>จำนวนบิล</span>
-          <span>${totalBills} บิล</span>
-        </div>
-
-        <div class="slip-row">
-          <span>จำนวนที่ขายทั้งหมด</span>
-          <span>${totalQty} รายการ</span>
-        </div>
-
-        <div class="slip-divider"></div>
-
-        <div class="slip-section-title">สรุปตามเมนู</div>
-        <div class="slip-menu-list">
-          ${menuSummary}
-        </div>
-      `;
-
-      summaryModal.classList.add("show");
-    }
-
-    function closeSummaryModal() {
-      summaryModal.classList.remove("show");
-    }
-
-    function initializeApp() {
-      const today = getToday();
-      saleDateInput.value = today;
-      summaryDateInput.value = today;
-      todayBadge.textContent = "วันนี้: " + today;
-
-      renderFoodOptions();
-      renderCurrentBill();
-      renderSavedBills();
-
-      foodItemInput.addEventListener("change", updateSelectedPrice);
-
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-          closeSummaryModal();
-        }
-      });
-    }
-
-    initializeApp();
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
