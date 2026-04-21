@@ -90,6 +90,28 @@ function makeId() {
   return Date.now() + Math.floor(Math.random() * 1000);
 }
 
+function isTransientNetworkError(err) {
+  const msg = String(err?.message || "");
+  return (
+    err instanceof TypeError ||
+    /Failed to fetch|Load failed|NetworkError|fetch/i.test(msg)
+  );
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function retryOnceOnNetworkError(task, delay = 900) {
+  try {
+    return await task();
+  } catch (err) {
+    if (!isTransientNetworkError(err)) throw err;
+    await wait(delay);
+    return await task();
+  }
+}
+
 /* ── API Layer ──────────────────────────────────────────── */
 async function apiFetchBills(params = {}) {
   const url = new URL(APPS_SCRIPT_URL);
@@ -369,7 +391,7 @@ async function saveCurrentBill() {
   showToast("กำลังบันทึก...", "success", 60000);
 
   try {
-    await apiSaveBill(bill);
+    await retryOnceOnNetworkError(() => apiSaveBill(bill), 900);
     $("billNo").value = "";
     currentBillItems  = [];
     renderCurrentBill();
