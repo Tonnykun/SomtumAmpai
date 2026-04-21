@@ -1226,18 +1226,44 @@ button:active { transform: scale(0.97); }
   font-weight: 400;
 }
 
-#savedBillsDate {
-  cursor: pointer;
+.date-input-wrap {
+  position: relative;
+  width: 100%;
 }
 
-input[type="date"].field-input {
-  -webkit-appearance: auto;
-  appearance: auto;
+.date-input {
   padding-right: 44px;
   cursor: pointer;
 }
 
-input[type="date"].field-input::-webkit-calendar-picker-indicator {
-  opacity: 1;
+.date-input-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: var(--text-tertiary);
+  pointer-events: none;
+  line-height: 1;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 0;
+  width: 44px;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.date-input-wrap {
+  position: relative;
+  width: 100%;
+  display: block;
+}
+
+.date-input {
+  width: 100%;
+  padding-right: 46px;
   cursor: pointer;
 }

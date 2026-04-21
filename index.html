@@ -70,16 +70,20 @@
 
         <div class="card-body">
           <!-- Date + Bill No -->
-          <div class="field-row">
-            <div class="field">
-              <label class="field-label" for="saleDate">วันที่</label>
-              <input class="field-input" type="date" id="saleDate" />
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="saleDate">วันที่</label>
+                <div class="date-input-wrap">
+                  <input class="field-input date-input" type="date" id="saleDate" />
+                  <span class="date-input-icon">📅</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="billNo">เลขบิล</label>
+                <input class="field-input" type="text" id="billNo" placeholder="รันอัตโนมัติ" readonly />
+              </div>
             </div>
-            <div class="field">
-              <label class="field-label" for="billNo">เลขบิล</label>
-              <input class="field-input" type="text" id="billNo" placeholder="รันอัตโนมัติ" readonly />
-            </div>
-          </div>
 
           <!-- Channel -->
           <div class="field" style="margin-bottom: 16px;">
@@ -224,7 +228,10 @@
         <div class="card-body">
           <div class="field summary-date-field">
             <label class="field-label" for="summaryDate">เลือกวันที่สรุป</label>
-            <input class="field-input" type="date" id="summaryDate" />
+            <div class="date-input-wrap">
+              <input class="field-input date-input" type="date" id="summaryDate" />
+              <span class="date-input-icon">📅</span>
+            </div>
           </div>
           <button class="btn btn-primary" style="width:100%;" onclick="showTodaySummary()">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
@@ -275,7 +282,10 @@
           <div class="saved-bills-toolbar">
             <div class="field">
               <label class="field-label" for="savedBillsDate">เลือกวันที่ที่ต้องการดู</label>
-              <input class="field-input" type="date" id="savedBillsDate" />
+              <div class="date-input-wrap">
+                <input class="field-input date-input" type="date" id="savedBillsDate" />
+                <span class="date-input-icon">📅</span>
+              </div>
             </div>
           </div>
 
