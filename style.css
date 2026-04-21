@@ -1239,7 +1239,7 @@ button:active { transform: scale(0.97); }
 .date-input {
   width: 100%;
   height: 50px;
-  padding-right: 40px;
+  padding-right: 42px;
   cursor: pointer;
 }
 
