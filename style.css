@@ -458,8 +458,10 @@ input[type="date"].field-input {
 }
 
 @media (max-width: 640px) {
-  .addon-row {
-    grid-template-columns: 1fr;
+  .menu-stack .field-row {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 12px;
+    align-items: end;
   }
 }
 
