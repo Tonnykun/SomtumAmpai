@@ -283,8 +283,6 @@ body {
   color: var(--text-primary);
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
   touch-action: manipulation;
-  appearance: none;
-  -webkit-appearance: none;
 }
 
 .field-input:focus {
@@ -1229,5 +1227,17 @@ button:active { transform: scale(0.97); }
 }
 
 #savedBillsDate {
+  cursor: pointer;
+}
+
+input[type="date"].field-input {
+  -webkit-appearance: auto;
+  appearance: auto;
+  padding-right: 44px;
+  cursor: pointer;
+}
+
+input[type="date"].field-input::-webkit-calendar-picker-indicator {
+  opacity: 1;
   cursor: pointer;
 }
