@@ -167,11 +167,6 @@ async function updateAutoBillNo() {
   }
 }
 
-function clearSavedBillsFilter() {
-  $("savedBillsDate").value = "";
-  renderSavedBills();
-}
-
 /* ── API Layer ──────────────────────────────────────────── */
 async function apiFetchBills(params = {}) {
   const url = new URL(APPS_SCRIPT_URL);

@@ -808,20 +808,11 @@ button:active { transform: scale(0.97); }
 }
 
 .saved-bills-toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: end;
   margin-bottom: 14px;
 }
 
 .saved-bills-toolbar .field {
-  min-width: 0;
-}
-
-.saved-bills-toolbar .btn-ghost {
-  height: 44px;
-  min-width: 108px;
+  width: 100%;
 }
 
 .price-strike {
@@ -840,16 +831,6 @@ button:active { transform: scale(0.97); }
   color: #b45309;
   font-size: 12px;
   font-weight: 700;
-}
-
-@media (max-width: 640px) {
-  .saved-bills-toolbar {
-    grid-template-columns: 1fr;
-  }
-
-  .saved-bills-toolbar .btn-ghost {
-    justify-self: start;
-  }
 }
 
 /* ── Modal / Bottom Sheet (iOS-style) ───────────────────── */
@@ -1247,3 +1228,6 @@ button:active { transform: scale(0.97); }
   font-weight: 400;
 }
 
+#savedBillsDate {
+  cursor: pointer;
+}
