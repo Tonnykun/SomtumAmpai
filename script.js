@@ -55,6 +55,7 @@ const PRICE_TABLE = {
 /* ── State ──────────────────────────────────────────────── */
 let currentBillItems = [];
 let currentChannel   = "store";
+let allBillsCache    = [];
 let isLoading        = false;
 
 /* ── DOM refs ───────────────────────────────────────────── */
@@ -112,6 +113,64 @@ async function retryOnceOnNetworkError(task, delay = 900) {
   }
 }
 
+function normalizeDateValue(value) {
+  if (!value) return "";
+
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value ?? "");
+
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatDateDisplay(value) {
+  const normalized = normalizeDateValue(value);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return String(value ?? "—");
+
+  const [y, m, d] = normalized.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+function normalizeBillFromApi(bill) {
+  return {
+    ...bill,
+    date: normalizeDateValue(bill.date),
+    billNo: String(bill.billNo ?? ""),
+    items: Array.isArray(bill.items) ? bill.items : []
+  };
+}
+
+async function updateAutoBillNo() {
+  const selectedDate = $("saleDate").value || getToday();
+
+  try {
+    const bills = allBillsCache.length ? allBillsCache : await apiFetchBills();
+    const sameDayBills = bills.filter(b => b.date === selectedDate);
+
+    const billNumbers = sameDayBills
+      .map(b => parseInt(String(b.billNo).trim(), 10))
+      .filter(n => !Number.isNaN(n));
+
+    const nextBillNo = billNumbers.length ? Math.max(...billNumbers) + 1 : 1;
+    $("billNo").value = String(nextBillNo);
+  } catch {
+    if (!$("billNo").value) {
+      $("billNo").value = "1";
+    }
+  }
+}
+
+function clearSavedBillsFilter() {
+  $("savedBillsDate").value = "";
+  renderSavedBills();
+}
+
 /* ── API Layer ──────────────────────────────────────────── */
 async function apiFetchBills(params = {}) {
   const url = new URL(APPS_SCRIPT_URL);
@@ -140,7 +199,7 @@ async function apiFetchBills(params = {}) {
     throw new Error(data.error || "โหลดข้อมูลไม่สำเร็จ");
   }
 
-  return data.bills;
+  return (data.bills || []).map(normalizeBillFromApi);
 }
 
 async function apiSaveBill(bill) {
@@ -421,11 +480,11 @@ async function saveCurrentBill() {
 
   try {
     await retryOnceOnNetworkError(() => apiSaveBill(bill), 900);
-    $("billNo").value = "";
-    currentBillItems  = [];
+    currentBillItems = [];
     renderCurrentBill();
     await loadAndRenderSavedBills();
     await updateStats();
+    await updateAutoBillNo();
     document.querySelectorAll(".toast").forEach(t => t.remove());
     showToast(`บันทึกบิล ${billNo} สำเร็จ · ${formatMoney(totalAmount)}`, "success");
   } catch (err) {
@@ -463,11 +522,14 @@ function clearAllBills() {
     setLoading(true);
     try {
       await apiDeleteAll();
-      currentBillItems  = [];
+      currentBillItems = [];
+      allBillsCache = [];
       $("billNo").value = "";
       renderCurrentBill();
       await loadAndRenderSavedBills();
       await updateStats();
+      await updateAutoBillNo();
+      renderSavedBills();
       showToast("ลบข้อมูลทั้งหมดแล้ว", "warn");
     } catch (err) {
       showToast(`ลบไม่สำเร็จ: ${err.message}`, "error", 4000);
@@ -480,9 +542,10 @@ function clearAllBills() {
 /* ── Load saved bills from Sheet ────────────────────────── */
 async function loadAndRenderSavedBills() {
   showTableLoading("savedBillsBody", 5);
+
   try {
-    const bills = await apiFetchBills();
-    renderSavedBills(bills);
+    allBillsCache = await apiFetchBills();
+    renderSavedBills();
   } catch (err) {
     $("savedBillsBody").innerHTML = `
       <tr class="empty-row">
@@ -492,27 +555,44 @@ async function loadAndRenderSavedBills() {
   }
 }
 
-function renderSavedBills(bills) {
+function renderSavedBills() {
   const tbody = $("savedBillsBody");
+  const filterDate = $("savedBillsDate")?.value || "";
+
+  const bills = filterDate
+    ? allBillsCache.filter(bill => bill.date === filterDate)
+    : allBillsCache;
+
   if (!bills || !bills.length) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="5">ยังไม่มีบิลที่บันทึกไว้</td></tr>`;
+    tbody.innerHTML = `
+      <tr class="empty-row">
+        <td colspan="5">
+          ${filterDate ? "ยังไม่มีบิลของวันที่เลือก" : "ยังไม่มีบิลที่บันทึกไว้"}
+        </td>
+      </tr>
+    `;
     return;
   }
+
   tbody.innerHTML = bills.map(bill => {
     const itemsHtml = bill.items.map(item => {
       const chClass = item.channel === "grabfood" ? "grab" : "store";
       const chLabel = item.channel === "grabfood" ? "Grab" : "ร้าน";
+      const hasDiscount = Number(item.discountPct || 0) > 0;
+
       return `
         <div class="food-line">
           <span class="channel-tag channel-tag--${chClass}">${chLabel}</span>
           ${escapeHTML(item.foodName)} ×${item.qty}
+          ${hasDiscount ? `<span class="discount-badge">-${item.discountPct}%</span>` : ""}
           <strong style="font-family:var(--font-mono);margin-left:4px;">${formatMoney(item.lineTotal)}</strong>
         </div>
       `;
     }).join("");
+
     return `
       <tr>
-        <td style="font-family:var(--font-mono);font-size:13px;white-space:nowrap;">${bill.date}</td>
+        <td style="font-family:var(--font-mono);font-size:13px;white-space:nowrap;">${formatDateDisplay(bill.date)}</td>
         <td><span class="bill-tag">${escapeHTML(bill.billNo)}</span></td>
         <td><div class="food-lines">${itemsHtml}</div></td>
         <td class="num amount">${formatMoney(bill.totalAmount)}</td>
@@ -525,20 +605,23 @@ function renderSavedBills(bills) {
 /* ── Stats (from Sheet) ─────────────────────────────────── */
 async function updateStats() {
   try {
-    const today      = getToday();
-    const allBills   = await apiFetchBills();
+    const today = getToday();
+    const allBills = allBillsCache.length ? allBillsCache : await apiFetchBills();
     const todayBills = allBills.filter(b => b.date === today);
     const todaySales = todayBills.reduce((s, b) => s + b.totalAmount, 0);
+
     $("statTodayBills").textContent = todayBills.length;
     $("statTodaySales").textContent = todaySales > 0 ? formatMoney(todaySales) : "฿0";
     $("statTotalBills").textContent = allBills.length;
-  } catch { /* ไม่ crash ถ้า stats ล้มเหลว */ }
+  } catch {
+    // ไม่ crash ถ้า stats ล้มเหลว
+  }
 }
 
 /* ── Summary Modal ──────────────────────────────────────── */
 async function showTodaySummary() {
   const selectedDate = $("summaryDate").value || getToday();
-  $("slipDate").textContent = `วันที่ ${selectedDate}`;
+  $("slipDate").textContent = `วันที่ ${formatDateDisplay(selectedDate)}`;
   $("summaryBox").innerHTML = `
     <div style="text-align:center;padding:24px 0;">
       <span class="loading-dots"><span></span><span></span><span></span></span>
@@ -548,7 +631,9 @@ async function showTodaySummary() {
   document.body.style.overflow = "hidden";
 
   try {
-    const bills = await apiFetchBills({ date: selectedDate });
+    const allBills = allBillsCache.length ? allBillsCache : await apiFetchBills();
+    const bills = allBills.filter(b => b.date === selectedDate);
+
     if (!bills.length) {
       $("summaryBox").innerHTML = `
         <div style="text-align:center;padding:24px 0;color:var(--text-tertiary);font-size:15px;">
@@ -560,14 +645,14 @@ async function showTodaySummary() {
 
     const totalSales = bills.reduce((s, b) => s + b.totalAmount, 0);
     const totalBills = bills.length;
-    let   totalQty   = 0;
-    const grouped    = {};
+    let totalQty = 0;
+    const grouped = {};
 
     bills.forEach(bill => {
       bill.items.forEach(item => {
         totalQty += item.qty;
         if (!grouped[item.foodName]) grouped[item.foodName] = { qty: 0, amount: 0 };
-        grouped[item.foodName].qty    += item.qty;
+        grouped[item.foodName].qty += item.qty;
         grouped[item.foodName].amount += item.lineTotal;
       });
     });
@@ -616,35 +701,48 @@ function handleBackdropClick(e) {
 /* ── Init ───────────────────────────────────────────────── */
 async function initializeApp() {
   const today = getToday();
-  $("saleDate").value         = today;
-  $("summaryDate").value      = today;
-  $("todayBadge").textContent = today;
+  $("saleDate").value = today;
+  $("summaryDate").value = today;
+  $("savedBillsDate").value = today;
+  $("todayBadge").textContent = formatDateDisplay(today);
+  $("billNo").readOnly = true;
+  $("billNo").placeholder = "รันอัตโนมัติ";
 
   renderFoodOptions();
   renderCurrentBill();
+  updatePriceDisplay();
 
-  showTableLoading("savedBillsBody", 5);
   try {
-    const bills = await apiFetchBills();
-    renderSavedBills(bills);
+    await loadAndRenderSavedBills();
     await updateStats();
-    } catch (err) {
-    console.error("initializeApp error:", err);
-
+    await updateAutoBillNo();
+  } catch (err) {
     $("savedBillsBody").innerHTML = `
-        <tr class="empty-row">
+      <tr class="empty-row">
         <td colspan="5" style="color:var(--red);">
-            ⚠️ โหลดข้อมูลไม่สำเร็จ: ${err.message}
+          ⚠️ โหลดข้อมูลไม่สำเร็จ: ${err.message}
         </td>
-        </tr>
+      </tr>
     `;
-    }
+  }
 
   $("foodItem").addEventListener("change", updatePriceDisplay);
+
   $("salesChannel").addEventListener("change", () => {
     currentChannel = $("salesChannel").value;
     renderFoodOptions();
+    $("itemDiscount").value = 0;
+    updatePriceDisplay();
   });
+
+  $("saleDate").addEventListener("change", async () => {
+    await updateAutoBillNo();
+  });
+
+  $("savedBillsDate").addEventListener("change", () => {
+    renderSavedBills();
+  });
+
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") closeSummaryModal();
   });

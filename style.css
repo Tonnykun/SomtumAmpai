@@ -753,6 +753,60 @@ button:active { transform: scale(0.97); }
   color: var(--blue);
 }
 
+.field-input[readonly] {
+  background: #ececf1;
+  color: var(--text-primary);
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.saved-bills-toolbar {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.saved-bills-toolbar .field {
+  flex: 1 1 220px;
+}
+
+.saved-bills-toolbar .btn-ghost {
+  height: 44px;
+  min-width: 108px;
+  align-self: end;
+}
+
+.price-strike {
+  text-decoration: line-through;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.discount-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--orange-light);
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .saved-bills-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .saved-bills-toolbar .btn-ghost {
+    align-self: flex-start;
+  }
+}
+
 /* ── Modal / Bottom Sheet (iOS-style) ───────────────────── */
 .modal-backdrop {
   position: fixed;

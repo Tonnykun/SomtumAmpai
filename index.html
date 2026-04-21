@@ -77,7 +77,7 @@
             </div>
             <div class="field">
               <label class="field-label" for="billNo">เลขบิล</label>
-              <input class="field-input" type="text" id="billNo" placeholder="เช่น 1, A01" />
+              <input class="field-input" type="text" id="billNo" placeholder="รันอัตโนมัติ" readonly />
             </div>
           </div>
 
@@ -259,6 +259,16 @@
         </div>
       </div>
       <div class="card-body">
+        <div class="saved-bills-toolbar">
+          <div class="field">
+            <label class="field-label" for="savedBillsDate">เลือกวันที่ที่ต้องการดู</label>
+            <input class="field-input" type="date" id="savedBillsDate" />
+          </div>
+
+          <button class="btn btn-ghost" type="button" onclick="clearSavedBillsFilter()">
+            ดูทั้งหมด
+          </button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
