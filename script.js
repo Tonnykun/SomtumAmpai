@@ -33,7 +33,7 @@ const PRICE_TABLE = {
     "น้ำมะพร้าวปั่น":     40,
   },
   grabfood: {
-    "ขนมจีน":             35,
+    "ขนมจีน":             40,
     "ขนมจีนเปล่า":        10,
     "แคบหมู":             10,
     "ตำปูปลาร้า":         50,
@@ -88,33 +88,6 @@ function escapeHTML(value = "") {
 
 function makeId() {
   return Date.now() + Math.floor(Math.random() * 1000);
-}
-
-// คำนวณเลขบิลถัดไปของวันที่เลือก (รันต่อจากบิลล่าสุดของวันนั้น)
-async function getNextBillNo(date) {
-  try {
-    const bills = await apiFetchBills({ date });
-    if (!bills.length) return "1";
-    const nums = bills.map(b => parseInt(b.billNo, 10)).filter(n => !isNaN(n));
-    return nums.length ? String(Math.max(...nums) + 1) : String(bills.length + 1);
-  } catch {
-    return "";
-  }
-}
-
-// set billNo อัตโนมัติ — ถ้า field ว่างอยู่เท่านั้น (ไม่ overwrite ที่พิมพ์เอง)
-async function autoFillBillNo() {
-  const field = $("billNo");
-  if (field.value.trim() !== "") return;
-  const date = $("saleDate").value;
-  if (!date) return;
-  field.placeholder = "กำลังโหลด...";
-  const next = await getNextBillNo(date);
-  // ตรวจอีกครั้งว่ายังว่างอยู่ (user อาจพิมพ์ระหว่างรอ)
-  if ($("billNo").value.trim() === "") {
-    $("billNo").value = next;
-  }
-  $("billNo").placeholder = "เช่น 1, A01";
 }
 
 function isTransientNetworkError(err) {
@@ -327,27 +300,47 @@ function adjustQty(delta) {
 
 /* ── Add item ───────────────────────────────────────────── */
 function addItemToCurrentBill() {
-  const foodName = $("foodItem").value;
-  const qty      = parseInt($("itemQty").value, 10);
-  if (!foodName)       { showToast("กรุณาเลือกรายการอาหาร", "warn"); return; }
-  if (!qty || qty < 1) { showToast("กรุณากรอกจำนวนให้ถูกต้อง", "warn"); return; }
+  const foodName   = $("foodItem").value;
+  const qty        = parseInt($("itemQty").value, 10);
+  const discountPct = parseFloat($("itemDiscount").value) || 0;
+
+  if (!foodName)                          { showToast("กรุณาเลือกรายการอาหาร", "warn"); return; }
+  if (!qty || qty < 1)                    { showToast("กรุณากรอกจำนวนให้ถูกต้อง", "warn"); return; }
+  if (discountPct < 0 || discountPct > 100) { showToast("ส่วนลดต้องอยู่ระหว่าง 0–100%", "warn"); return; }
+
   const price = PRICE_TABLE[currentChannel]?.[foodName];
-  if (price == null)   { showToast("ไม่พบราคาของเมนูนี้", "error"); return; }
+  if (price == null) { showToast("ไม่พบราคาของเมนูนี้", "error"); return; }
+
+  const discountedPrice = price * (1 - discountPct / 100);
+  const lineTotal       = discountedPrice * qty;
 
   const existing = currentBillItems.find(
     i => i.foodName === foodName && i.channel === currentChannel
   );
   if (existing) {
-    existing.qty      += qty;
-    existing.lineTotal = existing.qty * existing.price;
-    showToast(`${foodName} +${qty} (รวม ${existing.qty})`, "success");
+    // ถ้าซ้ำ: รวม qty และ update ส่วนลดใหม่
+    existing.qty          += qty;
+    existing.discountPct   = discountPct;
+    existing.discountedPrice = discountedPrice;
+    existing.lineTotal     = existing.qty * discountedPrice;
+    const note = discountPct > 0 ? ` (ส่วนลด ${discountPct}%)` : "";
+    showToast(`${foodName} +${qty} (รวม ${existing.qty})${note}`, "success");
   } else {
-    currentBillItems.push({ channel: currentChannel, foodName, price, qty, lineTotal: price * qty });
-    showToast(`เพิ่ม ${foodName} ×${qty}`, "success");
+    currentBillItems.push({
+      channel: currentChannel, foodName,
+      price,            // ราคาเต็มก่อนลด (เก็บไว้ใน Sheet ด้วย)
+      discountPct,
+      discountedPrice,
+      qty,
+      lineTotal
+    });
+    const note = discountPct > 0 ? ` ลด ${discountPct}% → ${formatMoney(discountedPrice)}/หน่วย` : "";
+    showToast(`เพิ่ม ${foodName} ×${qty}${note}`, "success");
   }
 
-  $("foodItem").value = "";
-  $("itemQty").value  = 1;
+  $("foodItem").value    = "";
+  $("itemQty").value     = 1;
+  $("itemDiscount").value = 0;
   updatePriceDisplay();
   renderCurrentBill();
 }
@@ -375,23 +368,31 @@ function clearCurrentBill(askConfirm = true) {
 function renderCurrentBill() {
   const tbody = $("currentBillBody");
   if (!currentBillItems.length) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="5">ยังไม่มีรายการในบิลปัจจุบัน</td></tr>`;
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">ยังไม่มีรายการในบิลปัจจุบัน</td></tr>`;
   } else {
     tbody.innerHTML = currentBillItems.map(item => {
-      const chClass = item.channel === "grabfood" ? "grab" : "store";
-      const chLabel = item.channel === "grabfood" ? "Grab" : "ร้าน";
+      const chClass   = item.channel === "grabfood" ? "grab" : "store";
+      const chLabel   = item.channel === "grabfood" ? "Grab" : "ร้าน";
+      const hasDsc    = item.discountPct > 0;
+      const priceCell = hasDsc
+        ? `<span class="price-strike">${formatMoney(item.price)}</span><br><span style="color:var(--green-dark);font-weight:700;font-size:13px;">${formatMoney(item.discountedPrice)}</span>`
+        : formatMoney(item.price);
+      const discCell  = hasDsc
+        ? `<span class="discount-badge">-${item.discountPct}%</span>`
+        : `<span style="color:var(--text-tertiary);font-size:12px;">—</span>`;
       return `
         <tr>
           <td>
             <span class="channel-tag channel-tag--${chClass}">${chLabel}</span>
             ${escapeHTML(item.foodName)}
           </td>
-          <td class="num">${formatMoney(item.price)}</td>
+          <td class="num">${priceCell}</td>
           <td class="num">${item.qty}</td>
+          <td class="num">${discCell}</td>
           <td class="num amount">${formatMoney(item.lineTotal)}</td>
           <td>
             <button class="btn-delete"
-              onclick="removeCurrentBillItem('${item.foodName.replace(/'/g, "\\'")}')">✕</button>
+              onclick="removeCurrentBillItem('${item.foodName.replace(/'/g, "\'")}')">✕</button>
           </td>
         </tr>
       `;
@@ -401,6 +402,7 @@ function renderCurrentBill() {
   $("draftQty").textContent   = currentBillItems.reduce((s, i) => s + i.qty, 0);
   $("draftTotal").textContent = formatMoney(currentBillItems.reduce((s, i) => s + i.lineTotal, 0));
 }
+
 
 /* ── Save bill → Google Sheet ───────────────────────────── */
 async function saveCurrentBill() {
@@ -423,7 +425,6 @@ async function saveCurrentBill() {
     currentBillItems  = [];
     renderCurrentBill();
     await loadAndRenderSavedBills();
-    await autoFillBillNo();   // ← เลขบิลถัดไปอัตโนมัติ
     await updateStats();
     document.querySelectorAll(".toast").forEach(t => t.remove());
     showToast(`บันทึกบิล ${billNo} สำเร็จ · ${formatMoney(totalAmount)}`, "success");
@@ -627,27 +628,22 @@ async function initializeApp() {
     const bills = await apiFetchBills();
     renderSavedBills(bills);
     await updateStats();
-    await autoFillBillNo();   // ← set เลขบิลอัตโนมัติหลังโหลด
-  } catch (err) {
+    } catch (err) {
     console.error("initializeApp error:", err);
+
     $("savedBillsBody").innerHTML = `
-      <tr class="empty-row">
+        <tr class="empty-row">
         <td colspan="5" style="color:var(--red);">
-          ⚠️ โหลดข้อมูลไม่สำเร็จ: ${err.message}
+            ⚠️ โหลดข้อมูลไม่สำเร็จ: ${err.message}
         </td>
-      </tr>
+        </tr>
     `;
-  }
+    }
 
   $("foodItem").addEventListener("change", updatePriceDisplay);
   $("salesChannel").addEventListener("change", () => {
     currentChannel = $("salesChannel").value;
     renderFoodOptions();
-  });
-  // เปลี่ยนวันที่ → คำนวณเลขบิลใหม่ของวันนั้น
-  $("saleDate").addEventListener("change", async () => {
-    $("billNo").value = "";
-    await autoFillBillNo();
   });
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") closeSummaryModal();
