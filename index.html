@@ -108,59 +108,88 @@
           <div class="section-label">เพิ่มเมนู</div>
 
           <!-- Menu row -->
-          <div class="menu-row">
-            <div class="field flex-2">
-              <label class="field-label" for="foodItem">รายการอาหาร</label>
-              <div class="select-wrap">
-                <select class="field-input" id="foodItem">
-                  <option value="">-- เลือกเมนู --</option>
-                </select>
-                <span class="select-arrow">›</span>
+          <div class="menu-stack">
+            <div class="field-row">
+              <div class="field flex-2">
+                <label class="field-label" for="foodItem">รายการอาหาร</label>
+                <div class="select-wrap">
+                  <select class="field-input" id="foodItem">
+                    <option value="">-- เลือกเมนู --</option>
+                  </select>
+                  <span class="select-arrow">›</span>
+                </div>
+              </div>
+              <div class="field flex-1">
+                <label class="field-label" for="itemPrice">ราคา/หน่วย</label>
+                <div class="price-field-wrap">
+                  <div class="price-display with-icon" id="itemPrice">—</div>
+                  <button type="button" class="price-edit-icon" id="editPriceBtn" onclick="editItemPrice()" disabled>✏️</button>
+                </div>
               </div>
             </div>
+
+            <div class="field-row">
+              <div class="field flex-2">
+                <label class="field-label" for="addonDetail">รายละเอียด Add-on</label>
+                <div class="select-wrap">
+                  <select class="field-input" id="addonDetail">
+                    <option value="">-- ไม่เลือก Add-on --</option>
+                  </select>
+                  <span class="select-arrow">›</span>
+                </div>
+              </div>
             <div class="field flex-1">
-              <label class="field-label" for="itemPrice">ราคา/หน่วย</label>
-              <div class="price-field-wrap">
-                <div class="price-display with-icon" id="itemPrice">—</div>
+              <label class="field-label" for="addonPrice">ราคา Add-on</label>
+              <div class="addon-price-wrap">
+                <input
+                  class="field-input addon-price-input"
+                  type="number"
+                  id="addonPrice"
+                  min="0"
+                  step="1"
+                  value="0"
+                  placeholder="0"
+                />
                 <button
                   type="button"
-                  class="price-edit-icon"
-                  id="editPriceBtn"
-                  onclick="editItemPrice()"
-                  aria-label="แก้ราคา"
-                  title="แก้ราคา"
-                  disabled
+                  class="addon-edit-icon"
+                  id="editAddonPriceBtn"
+                  onclick="editAddonPrice()"
+                  aria-label="แก้ราคา Add-on"
+                  title="แก้ราคา Add-on"
                 >
                   ✏️
                 </button>
               </div>
             </div>
-            <div class="field flex-1">
-              <label class="field-label" for="itemQty">จำนวน</label>
-              <div class="qty-control">
-                <button class="qty-btn" onclick="adjustQty(-1)">−</button>
-                <input class="qty-input" type="number" id="itemQty" min="1" value="1" />
-                <button class="qty-btn" onclick="adjustQty(1)">+</button>
-              </div>
-            </div>
-            <div class="field flex-1">
-              <label class="field-label" for="itemDiscount">
-                ส่วนลด %
-                <span class="discount-hint">Grab โปร</span>
-              </label>
-              <div class="discount-control">
-                <input class="discount-input" type="number" id="itemDiscount" min="0" max="100" step="1" value="0" placeholder="0" />
-                <span class="discount-unit">%</span>
-              </div>
-            </div>
-          </div>
 
-          <button class="btn btn-add" onclick="addItemToCurrentBill()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-            </svg>
-            เพิ่มเข้าบิล
-          </button>
+            <div class="field-row">
+              <div class="field flex-1">
+                <label class="field-label" for="itemQty">จำนวน</label>
+                <div class="qty-control">
+                  <button class="qty-btn" onclick="adjustQty(-1)">−</button>
+                  <input class="qty-input" type="number" id="itemQty" min="1" value="1" />
+                  <button class="qty-btn" onclick="adjustQty(1)">+</button>
+                </div>
+              </div>
+              <div class="field flex-1">
+                <label class="field-label" for="itemDiscount">
+                  ส่วนลด % <span class="discount-hint">Grab โปร</span>
+                </label>
+                <div class="discount-control">
+                  <input class="discount-input" type="number" id="itemDiscount" min="0" max="100" value="0" />
+                  <span class="discount-unit">%</span>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-add menu-add-btn" onclick="addItemToCurrentBill()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+              เพิ่มเข้าบิล
+            </button>
+          </div>
 
           <!-- Draft summary chips -->
           <div class="draft-chips">

@@ -15,42 +15,47 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzj_h3fjFqKmDsJ
 /* ── Price Table ────────────────────────────────────────── */
 const PRICE_TABLE = {
   store: {
-    "ขนมจีน":             25,
-    "ขนมจีนเปล่า":        5,
-    "แคบหมู":              5,
-    "ตำปูปลาร้า":         40,
-    "ตำไทย":              40,
-    "ตำแตงหมูยอ":         50,
-    "ตำข้าวโพดไข่เค็ม":  60,
-    "ตำถั่ว":             60,
-    "ตำซั่ว":             50,
-    "ตำมะม่วง":           30,
-    "ยำหมูยอ":            50,
-    "ยำคอหมูย่าง":        60,
-    "น้ำแตงโมปั่น":       20,
-    "น้ำสัปปะรดปั่น":     20,
-    "น้ำส้มปั่น":         25,
-    "น้ำมะพร้าวปั่น":     40,
+    "ขนมจีน": 25,
+    "ขนมจีนเปล่า": 5,
+    "แคบหมู": 5,
+    "ตำปูปลาร้า": 40,
+    "ตำไทย": 40,
+    "ตำแตงหมูยอ": 50,
+    "ตำข้าวโพดไข่เค็ม": 60,
+    "ตำถั่ว": 60,
+    "ตำซั่ว": 50,
+    "ตำมะม่วง": 30,
+    "ยำหมูยอ": 50,
+    "ยำคอหมูย่าง": 60,
+    "น้ำแตงโมปั่น": 20,
+    "น้ำสัปปะรดปั่น": 20,
+    "น้ำส้มปั่น": 25,
+    "น้ำมะพร้าวปั่น": 40
   },
   grabfood: {
-    "ขนมจีน":             40,
-    "ขนมจีนเปล่า":        10,
-    "แคบหมู":             10,
-    "ตำปูปลาร้า":         50,
-    "ตำไทย":              50,
-    "ตำแตงหมูยอ":         60,
-    "ตำข้าวโพดไข่เค็ม":  60,
-    "ตำถั่ว":             69,
-    "ตำซั่ว":             60,
-    "ตำมะม่วง":           60,
-    "ยำหมูยอ":            60,
-    "ยำคอหมูย่าง":        60,
-    "น้ำแตงโมปั่น":       30,
-    "น้ำสัปปะรดปั่น":     30,
-    "น้ำส้มปั่น":         40,
-    "น้ำมะพร้าวปั่น":     50,
+    "ขนมจีน": 40,
+    "ขนมจีนเปล่า": 10,
+    "แคบหมู": 10,
+    "ตำปูปลาร้า": 50,
+    "ตำไทย": 50,
+    "ตำแตงหมูยอ": 60,
+    "ตำข้าวโพดไข่เค็ม": 60,
+    "ตำถั่ว": 69,
+    "ตำซั่ว": 60,
+    "ตำมะม่วง": 60,
+    "ยำหมูยอ": 60,
+    "ยำคอหมูย่าง": 60,
+    "น้ำแตงโมปั่น": 30,
+    "น้ำสัปปะรดปั่น": 30,
+    "น้ำส้มปั่น": 40,
+    "น้ำมะพร้าวปั่น": 50
   }
 };
+
+const ADDON_OPTIONS = [
+  { name: "ไข่เค็ม", price: 10 },
+  { name: "ไข่เยี่ยวม้า", price: 12 }
+];
 
 /* ── State ──────────────────────────────────────────────── */
 let currentBillItems = [];
@@ -166,6 +171,51 @@ async function updateAutoBillNo() {
     }
   }
 }
+
+function renderAddonOptions() {
+  const select = $("addonDetail");
+  if (!select) return;
+
+  select.innerHTML = `
+    <option value="">-- ไม่เลือก Add-on --</option>
+    ${ADDON_OPTIONS.map(item => `
+      <option value="${item.name}" data-price="${item.price}">
+        ${item.name}
+      </option>
+    `).join("")}
+  `;
+}
+
+function syncAddonPriceFromSelection() {
+  const select = $("addonDetail");
+  const priceInput = $("addonPrice");
+  if (!select || !priceInput) return;
+
+  const selectedOption = select.options[select.selectedIndex];
+  const price = selectedOption?.dataset?.price ?? "0";
+  priceInput.value = price;
+}
+
+function editAddonPrice() {
+  const input = $("addonPrice");
+  if (!input) return;
+
+  const currentPrice = input.value || "0";
+  const value = prompt("กรอกราคา Add-on", currentPrice);
+
+  if (value === null) return;
+
+  const parsed = parseFloat(String(value).replace(/,/g, "").trim());
+
+  if (Number.isNaN(parsed) || parsed < 0) {
+    showToast("กรุณากรอกราคา Add-on ให้ถูกต้อง", "warn");
+    return;
+  }
+
+  input.value = parsed;
+  showToast("แก้ราคา Add-on แล้ว", "success");
+}
+
 
 /* ── API Layer ──────────────────────────────────────────── */
 async function apiFetchBills(params = {}) {
@@ -410,6 +460,8 @@ function addItemToCurrentBill() {
   const foodName = $("foodItem").value;
   const qty = parseInt($("itemQty").value, 10);
   const discountPct = parseFloat($("itemDiscount").value || "0");
+  const addonDetail = $("addonDetail")?.value || "";
+  const addonPrice = parseFloat($("addonPrice")?.value || "0");
 
   if (!foodName) {
     showToast("กรุณาเลือกรายการอาหาร", "warn");
@@ -426,6 +478,11 @@ function addItemToCurrentBill() {
     return;
   }
 
+  if (addonPrice < 0) {
+    showToast("ราคา Add-on ต้องไม่ติดลบ", "warn");
+    return;
+  }
+
   const basePrice = PRICE_TABLE[currentChannel]?.[foodName];
   const priceOriginal = manualPrice ?? basePrice;
 
@@ -434,22 +491,28 @@ function addItemToCurrentBill() {
     return;
   }
 
-  const finalPrice = +(priceOriginal * (1 - discountPct / 100)).toFixed(2);
+  const discountedMainPrice = +(priceOriginal * (1 - discountPct / 100)).toFixed(2);
+  const finalUnitPrice = +(discountedMainPrice + addonPrice).toFixed(2);
 
   currentBillItems.push({
     channel: currentChannel,
     foodName,
     priceOriginal,
-    price: finalPrice,
+    price: finalUnitPrice,
+    mainPriceAfterDiscount: discountedMainPrice,
     manualPriceApplied: manualPrice != null,
     discountPct,
+    addonDetail,
+    addonPrice,
     qty,
-    lineTotal: +(finalPrice * qty).toFixed(2)
+    lineTotal: +(finalUnitPrice * qty).toFixed(2)
   });
 
   $("foodItem").value = "";
   $("itemQty").value = 1;
   $("itemDiscount").value = 0;
+  if ($("addonDetail")) $("addonDetail").value = "";
+  if ($("addonPrice")) $("addonPrice").value = 0;
   manualPrice = null;
 
   updatePriceDisplay();
@@ -459,8 +522,6 @@ function addItemToCurrentBill() {
 
 function removeCurrentBillItem(foodName) {
   currentBillItems = currentBillItems.filter(i => i.foodName !== foodName);
-  renderCurrentBill();
-  showToast(`ลบ ${foodName} แล้ว`, "warn");
 }
 
 function clearCurrentBill(askConfirm = true) {
@@ -487,9 +548,18 @@ function renderCurrentBill() {
       const chClass = item.channel === "grabfood" ? "grab" : "store";
       const chLabel = item.channel === "grabfood" ? "Grab" : "ร้าน";
 
+      const addonHtml = item.addonDetail
+        ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">
+             + ${escapeHTML(item.addonDetail)} (${formatMoney(item.addonPrice)})
+           </div>`
+        : "";
+
       const priceCell =
-        item.manualPriceApplied && item.priceOriginal !== item.price
-          ? `<span class="price-strike">${formatMoney(item.priceOriginal)}</span><br><span style="color:var(--green-dark);font-weight:700;font-size:13px;">${formatMoney(item.price)}</span>`
+        item.manualPriceApplied || item.discountPct > 0 || item.addonPrice > 0
+          ? `
+            ${item.priceOriginal != null ? `<span class="price-strike">${formatMoney(item.priceOriginal)}</span><br>` : ""}
+            <span style="color:var(--green-dark);font-weight:700;font-size:13px;">${formatMoney(item.price)}</span>
+          `
           : formatMoney(item.price);
 
       return `
@@ -497,6 +567,7 @@ function renderCurrentBill() {
           <td>
             <span class="channel-tag channel-tag--${chClass}">${chLabel}</span>
             ${escapeHTML(item.foodName)}
+            ${addonHtml}
           </td>
           <td class="num">${priceCell}</td>
           <td class="num">${item.qty}</td>
@@ -764,6 +835,8 @@ async function initializeApp() {
   renderFoodOptions();
   renderCurrentBill();
   updatePriceDisplay();
+  renderAddonOptions();
+  syncAddonPriceFromSelection();
 
   try {
     await loadAndRenderSavedBills();
@@ -802,6 +875,9 @@ async function initializeApp() {
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") closeSummaryModal();
   });
+
+  $("addonDetail").addEventListener("change", syncAddonPriceFromSelection);
+
 }
 
 document.addEventListener("DOMContentLoaded", initializeApp);
