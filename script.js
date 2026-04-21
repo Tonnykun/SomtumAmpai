@@ -56,6 +56,7 @@ const PRICE_TABLE = {
 let currentBillItems = [];
 let currentChannel   = "store";
 let allBillsCache    = [];
+let manualPrice      = null;
 let isLoading        = false;
 
 /* ── DOM refs ───────────────────────────────────────────── */
@@ -339,16 +340,68 @@ function renderFoodOptions() {
 
 function updatePriceDisplay() {
   const foodName = $("foodItem").value;
-  const display  = $("itemPrice");
-  if (!foodName) { display.textContent = "—"; display.style.color = ""; return; }
-  const price = PRICE_TABLE[currentChannel]?.[foodName];
-  if (price != null) {
-    display.textContent = formatMoney(price);
+  const display = $("itemPrice");
+  const editBtn = $("editPriceBtn");
+
+  if (!foodName) {
+    manualPrice = null;
+    display.textContent = "—";
+    display.style.color = "";
+
+    if (editBtn) {
+      editBtn.disabled = true;
+      editBtn.classList.remove("is-active");
+    }
+    return;
+  }
+
+  const basePrice = PRICE_TABLE[currentChannel]?.[foodName];
+  const shownPrice = manualPrice ?? basePrice;
+
+  if (shownPrice != null) {
+    display.textContent = formatMoney(shownPrice);
     display.style.color = "var(--green-dark)";
   } else {
     display.textContent = "—";
     display.style.color = "";
   }
+
+  if (editBtn) {
+    const canEdit = currentChannel === "grabfood";
+    editBtn.disabled = !canEdit;
+    editBtn.classList.toggle("is-active", manualPrice != null);
+  }
+}
+
+function editItemPrice() {
+  const foodName = $("foodItem").value;
+
+  if (!foodName) {
+    showToast("กรุณาเลือกเมนูก่อน", "warn");
+    return;
+  }
+
+  if (currentChannel !== "grabfood") {
+    showToast("แก้ราคาได้เฉพาะ GrabFood", "warn");
+    return;
+  }
+
+  const basePrice = PRICE_TABLE[currentChannel]?.[foodName];
+  const currentPrice = manualPrice ?? basePrice ?? "";
+  const input = prompt("กรอกราคาขายของ GrabFood", currentPrice);
+
+  if (input === null) return;
+
+  const parsed = parseFloat(String(input).replace(/,/g, "").trim());
+
+  if (Number.isNaN(parsed) || parsed <= 0) {
+    showToast("กรุณากรอกราคาให้ถูกต้อง", "warn");
+    return;
+  }
+
+  manualPrice = parsed;
+  updatePriceDisplay();
+  showToast("แก้ราคาแล้ว", "success");
 }
 
 /* ── Qty ────────────────────────────────────────────────── */
@@ -359,49 +412,54 @@ function adjustQty(delta) {
 
 /* ── Add item ───────────────────────────────────────────── */
 function addItemToCurrentBill() {
-  const foodName   = $("foodItem").value;
-  const qty        = parseInt($("itemQty").value, 10);
-  const discountPct = parseFloat($("itemDiscount").value) || 0;
+  const foodName = $("foodItem").value;
+  const qty = parseInt($("itemQty").value, 10);
+  const discountPct = parseFloat($("itemDiscount").value || "0");
 
-  if (!foodName)                          { showToast("กรุณาเลือกรายการอาหาร", "warn"); return; }
-  if (!qty || qty < 1)                    { showToast("กรุณากรอกจำนวนให้ถูกต้อง", "warn"); return; }
-  if (discountPct < 0 || discountPct > 100) { showToast("ส่วนลดต้องอยู่ระหว่าง 0–100%", "warn"); return; }
-
-  const price = PRICE_TABLE[currentChannel]?.[foodName];
-  if (price == null) { showToast("ไม่พบราคาของเมนูนี้", "error"); return; }
-
-  const discountedPrice = price * (1 - discountPct / 100);
-  const lineTotal       = discountedPrice * qty;
-
-  const existing = currentBillItems.find(
-    i => i.foodName === foodName && i.channel === currentChannel
-  );
-  if (existing) {
-    // ถ้าซ้ำ: รวม qty และ update ส่วนลดใหม่
-    existing.qty          += qty;
-    existing.discountPct   = discountPct;
-    existing.discountedPrice = discountedPrice;
-    existing.lineTotal     = existing.qty * discountedPrice;
-    const note = discountPct > 0 ? ` (ส่วนลด ${discountPct}%)` : "";
-    showToast(`${foodName} +${qty} (รวม ${existing.qty})${note}`, "success");
-  } else {
-    currentBillItems.push({
-      channel: currentChannel, foodName,
-      price,            // ราคาเต็มก่อนลด (เก็บไว้ใน Sheet ด้วย)
-      discountPct,
-      discountedPrice,
-      qty,
-      lineTotal
-    });
-    const note = discountPct > 0 ? ` ลด ${discountPct}% → ${formatMoney(discountedPrice)}/หน่วย` : "";
-    showToast(`เพิ่ม ${foodName} ×${qty}${note}`, "success");
+  if (!foodName) {
+    showToast("กรุณาเลือกรายการอาหาร", "warn");
+    return;
   }
 
-  $("foodItem").value    = "";
-  $("itemQty").value     = 1;
+  if (!qty || qty < 1) {
+    showToast("กรุณากรอกจำนวนให้ถูกต้อง", "warn");
+    return;
+  }
+
+  if (discountPct < 0 || discountPct > 100) {
+    showToast("กรุณากรอกส่วนลด 0 - 100%", "warn");
+    return;
+  }
+
+  const basePrice = PRICE_TABLE[currentChannel]?.[foodName];
+  const priceOriginal = manualPrice ?? basePrice;
+
+  if (priceOriginal == null) {
+    showToast("ไม่พบราคาของเมนูนี้", "error");
+    return;
+  }
+
+  const finalPrice = +(priceOriginal * (1 - discountPct / 100)).toFixed(2);
+
+  currentBillItems.push({
+    channel: currentChannel,
+    foodName,
+    priceOriginal,
+    price: finalPrice,
+    manualPriceApplied: manualPrice != null,
+    discountPct,
+    qty,
+    lineTotal: +(finalPrice * qty).toFixed(2)
+  });
+
+  $("foodItem").value = "";
+  $("itemQty").value = 1;
   $("itemDiscount").value = 0;
+  manualPrice = null;
+
   updatePriceDisplay();
   renderCurrentBill();
+  showToast(`เพิ่ม ${foodName} ×${qty}`, "success");
 }
 
 function removeCurrentBillItem(foodName) {
@@ -426,19 +484,19 @@ function clearCurrentBill(askConfirm = true) {
 /* ── Render current bill ────────────────────────────────── */
 function renderCurrentBill() {
   const tbody = $("currentBillBody");
+
   if (!currentBillItems.length) {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="6">ยังไม่มีรายการในบิลปัจจุบัน</td></tr>`;
   } else {
     tbody.innerHTML = currentBillItems.map(item => {
-      const chClass   = item.channel === "grabfood" ? "grab" : "store";
-      const chLabel   = item.channel === "grabfood" ? "Grab" : "ร้าน";
-      const hasDsc    = item.discountPct > 0;
-      const priceCell = hasDsc
-        ? `<span class="price-strike">${formatMoney(item.price)}</span><br><span style="color:var(--green-dark);font-weight:700;font-size:13px;">${formatMoney(item.discountedPrice)}</span>`
-        : formatMoney(item.price);
-      const discCell  = hasDsc
-        ? `<span class="discount-badge">-${item.discountPct}%</span>`
-        : `<span style="color:var(--text-tertiary);font-size:12px;">—</span>`;
+      const chClass = item.channel === "grabfood" ? "grab" : "store";
+      const chLabel = item.channel === "grabfood" ? "Grab" : "ร้าน";
+
+      const priceCell =
+        item.manualPriceApplied && item.priceOriginal !== item.price
+          ? `<span class="price-strike">${formatMoney(item.priceOriginal)}</span><br><span style="color:var(--green-dark);font-weight:700;font-size:13px;">${formatMoney(item.price)}</span>`
+          : formatMoney(item.price);
+
       return `
         <tr>
           <td>
@@ -447,18 +505,18 @@ function renderCurrentBill() {
           </td>
           <td class="num">${priceCell}</td>
           <td class="num">${item.qty}</td>
-          <td class="num">${discCell}</td>
+          <td class="num">${item.discountPct || 0}%</td>
           <td class="num amount">${formatMoney(item.lineTotal)}</td>
           <td>
-            <button class="btn-delete"
-              onclick="removeCurrentBillItem('${item.foodName.replace(/'/g, "\'")}')">✕</button>
+            <button class="btn-delete" onclick="removeCurrentBillItem('${item.foodName.replace(/'/g, "\\'")}')">✕</button>
           </td>
         </tr>
       `;
     }).join("");
   }
+
   $("draftLines").textContent = currentBillItems.length;
-  $("draftQty").textContent   = currentBillItems.reduce((s, i) => s + i.qty, 0);
+  $("draftQty").textContent = currentBillItems.reduce((s, i) => s + i.qty, 0);
   $("draftTotal").textContent = formatMoney(currentBillItems.reduce((s, i) => s + i.lineTotal, 0));
 }
 
@@ -726,12 +784,15 @@ async function initializeApp() {
     `;
   }
 
-  $("foodItem").addEventListener("change", updatePriceDisplay);
+  $("foodItem").addEventListener("change", () => {
+  manualPrice = null;
+  updatePriceDisplay();
+  });
 
   $("salesChannel").addEventListener("change", () => {
     currentChannel = $("salesChannel").value;
+    manualPrice = null;
     renderFoodOptions();
-    $("itemDiscount").value = 0;
     updatePriceDisplay();
   });
 

@@ -333,6 +333,53 @@ body {
   letter-spacing: -0.3px;
 }
 
+.price-field-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.price-display.with-icon {
+  padding-right: 52px;
+}
+
+.price-edit-icon {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: background 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.price-edit-icon:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.price-edit-icon:active {
+  transform: translateY(-50%) scale(0.96);
+}
+
+.price-edit-icon:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: transparent;
+}
+
+.price-edit-icon.is-active {
+  background: rgba(255, 159, 10, 0.16);
+  color: #b45309;
+}
+
 /* ── Segmented Control (iOS style) ──────────────────────── */
 .segmented-control {
   display: flex;

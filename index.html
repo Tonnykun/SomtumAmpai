@@ -111,7 +111,20 @@
             </div>
             <div class="field flex-1">
               <label class="field-label" for="itemPrice">ราคา/หน่วย</label>
-              <div class="price-display" id="itemPrice">—</div>
+              <div class="price-field-wrap">
+                <div class="price-display with-icon" id="itemPrice">—</div>
+                <button
+                  type="button"
+                  class="price-edit-icon"
+                  id="editPriceBtn"
+                  onclick="editItemPrice()"
+                  aria-label="แก้ราคา"
+                  title="แก้ราคา"
+                  disabled
+                >
+                  ✏️
+                </button>
+              </div>
             </div>
             <div class="field flex-1">
               <label class="field-label" for="itemQty">จำนวน</label>
