@@ -299,6 +299,14 @@ body {
 
 .field-input::-webkit-date-and-time-value { text-align: left; }
 
+/* ── iOS date input fix — ซ่อน native calendar icon ────── */
+input[type="date"].field-input {
+  appearance: none;
+  -webkit-appearance: none;
+  overflow: hidden;          /* กัน icon ล้นออกนอก field */
+  padding-right: 10px;       /* ลด padding ขวาให้ข้อความไม่ชิดเกิน */
+}
+
 /* Select wrapper */
 .select-wrap {
   position: relative;
