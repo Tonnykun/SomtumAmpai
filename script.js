@@ -76,7 +76,8 @@ function formatMoney(amount) {
   });
 }
 
-function escapeHTML(str = "") {
+function escapeHTML(value = "") {
+  const str = String(value ?? "");
   return str
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -95,9 +96,28 @@ async function apiFetchBills(params = {}) {
   url.searchParams.set("action", "getBills");
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
-  const res  = await fetch(url.toString());
-  const data = await res.json();
-  if (!data.ok) throw new Error(data.error || "โหลดข้อมูลไม่สำเร็จ");
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    cache: "no-store"
+  });
+
+  const text = await res.text();
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error("Apps Script ไม่ได้ส่ง JSON กลับมา");
+  }
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+
+  if (!data.ok) {
+    throw new Error(data.error || "โหลดข้อมูลไม่สำเร็จ");
+  }
+
   return data.bills;
 }
 
@@ -557,15 +577,17 @@ async function initializeApp() {
     const bills = await apiFetchBills();
     renderSavedBills(bills);
     await updateStats();
-  } catch {
+    } catch (err) {
+    console.error("initializeApp error:", err);
+
     $("savedBillsBody").innerHTML = `
-      <tr class="empty-row">
+        <tr class="empty-row">
         <td colspan="5" style="color:var(--red);">
-          ⚠️ เชื่อมต่อ Google Sheet ไม่ได้ — ตรวจสอบ APPS_SCRIPT_URL ในบรรทัดที่ 14
+            ⚠️ โหลดข้อมูลไม่สำเร็จ: ${err.message}
         </td>
-      </tr>
+        </tr>
     `;
-  }
+    }
 
   $("foodItem").addEventListener("change", updatePriceDisplay);
   $("salesChannel").addEventListener("change", () => {
