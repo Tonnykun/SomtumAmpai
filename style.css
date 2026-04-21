@@ -258,9 +258,14 @@ body {
 
 .field-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
   margin-bottom: 14px;
+  align-items: end;
+}
+
+.field-row > .field {
+  min-width: 0;
 }
 
 .field-label {
@@ -1102,7 +1107,11 @@ button:active { transform: scale(0.97); }
     padding: 0 14px;
   }
 
-  .field-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    align-items: end;
+  }
 
   .draft-chips { gap: 6px; }
   .draft-chip { padding: 9px 10px; }
@@ -1226,31 +1235,39 @@ button:active { transform: scale(0.97); }
   font-weight: 400;
 }
 
-.date-input-wrap {
-  position: relative;
-  width: 100%;
-}
 
 .date-input {
-  padding-right: 44px;
+  width: 100%;
+  height: 50px;
+  padding-right: 42px;
   cursor: pointer;
 }
 
 .date-input-icon {
   position: absolute;
-  right: 14px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 18px;
+  width: 16px;
+  height: 16px;
   color: var(--text-tertiary);
   pointer-events: none;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.date-input-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
 }
 
 .date-input::-webkit-calendar-picker-indicator {
   position: absolute;
   right: 0;
-  width: 44px;
+  top: 0;
+  width: 42px;
   height: 100%;
   opacity: 0;
   cursor: pointer;
@@ -1259,7 +1276,14 @@ button:active { transform: scale(0.97); }
 .date-input-wrap {
   position: relative;
   width: 100%;
+}
+
+.date-input-wrap {
+  position: relative;
+  width: 100%;
   display: block;
+  overflow: hidden;
+  border-radius: var(--radius-md);
 }
 
 .date-input {
