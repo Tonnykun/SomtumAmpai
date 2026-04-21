@@ -90,6 +90,33 @@ function makeId() {
   return Date.now() + Math.floor(Math.random() * 1000);
 }
 
+// คำนวณเลขบิลถัดไปของวันที่เลือก (รันต่อจากบิลล่าสุดของวันนั้น)
+async function getNextBillNo(date) {
+  try {
+    const bills = await apiFetchBills({ date });
+    if (!bills.length) return "1";
+    const nums = bills.map(b => parseInt(b.billNo, 10)).filter(n => !isNaN(n));
+    return nums.length ? String(Math.max(...nums) + 1) : String(bills.length + 1);
+  } catch {
+    return "";
+  }
+}
+
+// set billNo อัตโนมัติ — ถ้า field ว่างอยู่เท่านั้น (ไม่ overwrite ที่พิมพ์เอง)
+async function autoFillBillNo() {
+  const field = $("billNo");
+  if (field.value.trim() !== "") return;
+  const date = $("saleDate").value;
+  if (!date) return;
+  field.placeholder = "กำลังโหลด...";
+  const next = await getNextBillNo(date);
+  // ตรวจอีกครั้งว่ายังว่างอยู่ (user อาจพิมพ์ระหว่างรอ)
+  if ($("billNo").value.trim() === "") {
+    $("billNo").value = next;
+  }
+  $("billNo").placeholder = "เช่น 1, A01";
+}
+
 function isTransientNetworkError(err) {
   const msg = String(err?.message || "");
   return (
@@ -396,6 +423,7 @@ async function saveCurrentBill() {
     currentBillItems  = [];
     renderCurrentBill();
     await loadAndRenderSavedBills();
+    await autoFillBillNo();   // ← เลขบิลถัดไปอัตโนมัติ
     await updateStats();
     document.querySelectorAll(".toast").forEach(t => t.remove());
     showToast(`บันทึกบิล ${billNo} สำเร็จ · ${formatMoney(totalAmount)}`, "success");
@@ -599,22 +627,27 @@ async function initializeApp() {
     const bills = await apiFetchBills();
     renderSavedBills(bills);
     await updateStats();
-    } catch (err) {
+    await autoFillBillNo();   // ← set เลขบิลอัตโนมัติหลังโหลด
+  } catch (err) {
     console.error("initializeApp error:", err);
-
     $("savedBillsBody").innerHTML = `
-        <tr class="empty-row">
+      <tr class="empty-row">
         <td colspan="5" style="color:var(--red);">
-            ⚠️ โหลดข้อมูลไม่สำเร็จ: ${err.message}
+          ⚠️ โหลดข้อมูลไม่สำเร็จ: ${err.message}
         </td>
-        </tr>
+      </tr>
     `;
-    }
+  }
 
   $("foodItem").addEventListener("change", updatePriceDisplay);
   $("salesChannel").addEventListener("change", () => {
     currentChannel = $("salesChannel").value;
     renderFoodOptions();
+  });
+  // เปลี่ยนวันที่ → คำนวณเลขบิลใหม่ของวันนั้น
+  $("saleDate").addEventListener("change", async () => {
+    $("billNo").value = "";
+    await autoFillBillNo();
   });
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") closeSummaryModal();
