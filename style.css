@@ -808,21 +808,20 @@ button:active { transform: scale(0.97); }
 }
 
 .saved-bills-toolbar {
-  display: flex;
-  align-items: end;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
+  align-items: end;
   margin-bottom: 14px;
-  flex-wrap: wrap;
 }
 
 .saved-bills-toolbar .field {
-  flex: 1 1 220px;
+  min-width: 0;
 }
 
 .saved-bills-toolbar .btn-ghost {
   height: 44px;
   min-width: 108px;
-  align-self: end;
 }
 
 .price-strike {
@@ -845,12 +844,11 @@ button:active { transform: scale(0.97); }
 
 @media (max-width: 640px) {
   .saved-bills-toolbar {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: 1fr;
   }
 
   .saved-bills-toolbar .btn-ghost {
-    align-self: flex-start;
+    justify-self: start;
   }
 }
 
