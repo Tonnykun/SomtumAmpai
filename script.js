@@ -54,7 +54,8 @@ const PRICE_TABLE = {
 
 const ADDON_OPTIONS = [
   { name: "ไข่เค็ม", price: 10 },
-  { name: "ไข่เยี่ยวม้า", price: 12 }
+  { name: "หมูยอ", price: 10 },
+  { name: "ขนมจีน", price: 10 },
 ];
 
 /* ── State ──────────────────────────────────────────────── */
