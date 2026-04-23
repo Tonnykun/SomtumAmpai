@@ -971,9 +971,9 @@ function handleBackdropClick(e) {
 /* ── Init ───────────────────────────────────────────────── */
 async function initializeApp() {
   const today = getToday();
-  $("todayBadge").textContent = formatDateDisplay(today);
   $("saleDate").value = today;
   $("summaryDate").value = today;
+  $("todayBadge").textContent = formatDateDisplay(today);
   $("savedBillsDate").value = today;
   $("billNo").readOnly = true;
   $("billNo").placeholder = "รันอัตโนมัติ";
