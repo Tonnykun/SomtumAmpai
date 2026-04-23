@@ -12,6 +12,17 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzj_h3fjFqKmDsJhZ3QnLsBP2R5MIJm5JDOR72-11H7wxeYNeJxzBu4arl4WPD8RPUo1Q/exec";
 //                       ↑ แทนด้วย URL จริงที่ได้จาก Deploy
 
+/* ── Auth Config ───────────────────────────────────────── */
+const VALID_USERS = [
+  { username: "admin", password: "somtum1234", displayName: "เจ้าของร้าน" },
+  { username: "staff", password: "0000", displayName: "พนักงาน" }
+];
+
+const SESSION_KEY = "sales_app_session";
+
+/* ── Auth State ────────────────────────────────────────── */
+let currentUser = null;
+
 /* ── Price Table ────────────────────────────────────────── */
 const PRICE_TABLE = {
   store: {
@@ -67,6 +78,140 @@ let isLoading        = false;
 
 /* ── DOM refs ───────────────────────────────────────────── */
 const $ = id => document.getElementById(id);
+
+/* ── Auth Helpers ──────────────────────────────────────── */
+function showLoginScreen() {
+  const overlay = $("loginScreen");
+  if (!overlay) return;
+  overlay.classList.remove("is-hidden");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => $("loginUsername")?.focus(), 50);
+}
+
+function hideLoginScreen() {
+  const overlay = $("loginScreen");
+  if (!overlay) return;
+  overlay.classList.add("is-hidden");
+  document.body.style.overflow = "";
+}
+
+function showLoginError(message) {
+  $("loginErrorText").textContent = message;
+  $("loginError").style.display = "block";
+}
+
+function clearLoginError() {
+  $("loginError").style.display = "none";
+}
+
+function togglePassword() {
+  const input = $("loginPassword");
+  if (!input) return;
+  input.type = input.type === "password" ? "text" : "password";
+}
+
+function applyCurrentUserUI() {
+  const userChip = $("userChip");
+  const navInfoUser = $("navInfoUser");
+  const navAvatar = $("navAvatar");
+
+  if (!currentUser) {
+    if (userChip) userChip.style.display = "none";
+    return;
+  }
+
+  const username = String(currentUser.username || "").trim().toLowerCase();
+
+  let avatarText = "U";
+  if (username === "admin") avatarText = "A";
+  if (username === "staff") avatarText = "S";
+
+  if (userChip) userChip.style.display = "inline-flex";
+  if (navInfoUser) navInfoUser.textContent = currentUser.displayName || currentUser.username;
+  if (navAvatar) navAvatar.textContent = avatarText;
+}
+
+function handleLogin() {
+  const username = $("loginUsername")?.value.trim();
+  const password = $("loginPassword")?.value || "";
+  const remember = $("rememberMe")?.checked;
+
+  if (!username || !password) {
+    showLoginError("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน");
+    return;
+  }
+
+  const user = VALID_USERS.find(
+    u => u.username === username && u.password === password
+  );
+
+  if (!user) {
+    showLoginError("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+    return;
+  }
+
+  clearLoginError();
+  currentUser = {
+    username: user.username,
+    displayName: user.displayName
+  };
+
+  if (remember) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+  } else {
+    localStorage.removeItem(SESSION_KEY);
+  }
+
+  applyCurrentUserUI();
+  hideLoginScreen();
+  showToast(`ยินดีต้อนรับ ${currentUser.displayName}`, "success");
+}
+
+function logoutNow() {
+  localStorage.removeItem(SESSION_KEY);
+  currentUser = null;
+  applyCurrentUserUI();
+
+  if ($("loginUsername")) $("loginUsername").value = "";
+  if ($("loginPassword")) $("loginPassword").value = "";
+  if ($("rememberMe")) $("rememberMe").checked = false;
+  clearLoginError();
+  showLoginScreen();
+}
+
+function handleLogout() {
+  showConfirm("ต้องการออกจากระบบ?", () => {
+    logoutNow();
+    showToast("ออกจากระบบแล้ว", "warn");
+  });
+}
+
+function checkSavedSession() {
+  try {
+    const saved = localStorage.getItem(SESSION_KEY);
+    if (!saved) return false;
+
+    const user = JSON.parse(saved);
+    if (!user?.username) return false;
+
+    currentUser = user;
+    applyCurrentUserUI();
+    hideLoginScreen();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function bindAuthEvents() {
+  $("loginUsername")?.addEventListener("keydown", e => {
+    if (e.key === "Enter") $("loginPassword")?.focus();
+  });
+
+  $("loginPassword")?.addEventListener("keydown", e => {
+    if (e.key === "Enter") handleLogin();
+  });
+}
 
 /* ── Helpers ────────────────────────────────────────────── */
 function getToday() {
@@ -826,10 +971,10 @@ function handleBackdropClick(e) {
 /* ── Init ───────────────────────────────────────────────── */
 async function initializeApp() {
   const today = getToday();
+  $("todayBadge").textContent = formatDateDisplay(today);
   $("saleDate").value = today;
   $("summaryDate").value = today;
   $("savedBillsDate").value = today;
-  $("todayBadge").textContent = formatDateDisplay(today);
   $("billNo").readOnly = true;
   $("billNo").placeholder = "รันอัตโนมัติ";
 
@@ -881,4 +1026,12 @@ async function initializeApp() {
 
 }
 
-document.addEventListener("DOMContentLoaded", initializeApp);
+document.addEventListener("DOMContentLoaded", () => {
+  bindAuthEvents();
+  applyCurrentUserUI();
+  $("todayBadge").textContent = formatDateDisplay(getToday());
+
+  if (!checkSavedSession()) {
+    showLoginScreen();
+  }
+});

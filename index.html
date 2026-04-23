@@ -14,6 +14,42 @@
   <!-- Toast container -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <div class="auth-overlay" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">🍽️</div>
+    <h2 class="login-title">เข้าสู่ระบบ</h2>
+    <p class="login-subtitle">ระบบบันทึกยอดขายร้านส้มตำเจ้อำไพ</p>
+
+    <div class="login-form">
+      <div class="login-field">
+        <label for="loginUsername">ชื่อผู้ใช้</label>
+        <input type="text" id="loginUsername" class="login-input" placeholder="กรอกชื่อผู้ใช้" autocomplete="username" />
+      </div>
+
+      <div class="login-field">
+        <label for="loginPassword">รหัสผ่าน</label>
+        <div class="login-password-wrap">
+          <input type="password" id="loginPassword" class="login-input" placeholder="กรอกรหัสผ่าน" autocomplete="current-password" />
+          <button type="button" class="login-eye-btn" id="loginEyeBtn" onclick="togglePassword()">👁️</button>
+        </div>
+      </div>
+
+      <label class="login-remember">
+        <input type="checkbox" id="rememberMe" />
+        <span>จดจำฉันไว้</span>
+      </label>
+
+      <div class="login-error" id="loginError" style="display:none;">
+        <span id="loginErrorText">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</span>
+      </div>
+
+      <button class="login-btn" id="loginBtn" type="button" onclick="handleLogin()">
+        เข้าสู่ระบบ
+      </button>
+    </div>
+  </div>
+</div>
+
   <!-- Page -->
   <div class="page">
 
@@ -32,7 +68,18 @@
           <p class="app-subtitle">ระบบบันทึกยอดขายส้มตำเจ้อำไพ · ทรายมูล</p>
         </div>
       </div>
-      <div class="date-pill" id="todayBadge">—</div>
+
+      <div class="topbar-right">
+        <div class="date-pill" id="todayBadge">—</div>
+
+        <div class="user-chip" id="userChip" style="display:none;">
+          <div class="user-avatar" id="navAvatar">A</div>
+          <div class="user-name" id="navInfoUser">—</div>
+          <button class="logout-btn" type="button" onclick="handleLogout()" aria-label="ออกจากระบบ">
+            ออก
+          </button>
+        </div>
+      </div>
     </header>
 
     <!-- Stats Row -->
@@ -279,12 +326,6 @@
             ดูสรุปวันที่เลือก
           </button>
 
-          <div class="summary-placeholder" id="summaryPlaceholder">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style="margin-bottom:10px;opacity:.35">
-              <path d="M9 17H7A5 5 0 017 7h1M15 7h2a5 5 0 010 10h-1M8 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-            <div>เลือกวันที่ แล้วกดดูสรุป</div>
-          </div>
         </div>
 
         <!-- Danger zone -->
