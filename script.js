@@ -1026,10 +1026,12 @@ async function initializeApp() {
 
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   bindAuthEvents();
+
+  await initializeApp();   // สำคัญมาก
+
   applyCurrentUserUI();
-  $("todayBadge").textContent = formatDateDisplay(getToday());
 
   if (!checkSavedSession()) {
     showLoginScreen();
