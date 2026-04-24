@@ -368,6 +368,12 @@ function editAddonPrice() {
   showToast("แก้ราคา Add-on แล้ว", "success");
 }
 
+function getMonthStart(value = getToday()) {
+  const normalized = normalizeDateValue(value);
+  const [y, m] = normalized.split("-");
+  return `${y}-${m}-01`;
+}
+
 
 /* ── API Layer ──────────────────────────────────────────── */
 async function apiFetchBills(params = {}) {
@@ -895,9 +901,16 @@ async function updateStats() {
 }
 
 /* ── Summary Modal ──────────────────────────────────────── */
-async function showTodaySummary() {
-  const selectedDate = $("summaryDate").value || getToday();
-  $("slipDate").textContent = `วันที่ ${formatDateDisplay(selectedDate)}`;
+async function showRangeSummary() {
+  const startDate = $("summaryStartDate").value || getMonthStart();
+  const endDate = $("summaryEndDate").value || getToday();
+
+  if (startDate > endDate) {
+    showToast("วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด", "warn");
+    return;
+  }
+
+  $("slipDate").textContent = `ช่วงวันที่ ${formatDateDisplay(startDate)} - ${formatDateDisplay(endDate)}`;
   $("summaryBox").innerHTML = `
     <div style="text-align:center;padding:24px 0;">
       <span class="loading-dots"><span></span><span></span><span></span></span>
@@ -908,12 +921,12 @@ async function showTodaySummary() {
 
   try {
     const allBills = allBillsCache.length ? allBillsCache : await apiFetchBills();
-    const bills = allBills.filter(b => b.date === selectedDate);
+    const bills = allBills.filter(b => b.date >= startDate && b.date <= endDate);
 
     if (!bills.length) {
       $("summaryBox").innerHTML = `
         <div style="text-align:center;padding:24px 0;color:var(--text-tertiary);font-size:15px;">
-          ไม่มีข้อมูลยอดขายของวันที่เลือก
+          ไม่มีข้อมูลยอดขายในช่วงวันที่เลือก
         </div>
       `;
       return;
@@ -1021,19 +1034,145 @@ async function showTodaySummary() {
       <hr class="slip-divider"/>
       <div class="slip-section-title">สรุปตามเมนู</div>
       <div class="slip-menu-list">${menuItems}</div>
-    `;
-  } catch (err) {
-    $("summaryBox").innerHTML = `
-      <div style="color:var(--red);padding:16px 0;font-size:14px;">
-        โหลดข้อมูลไม่สำเร็จ: ${err.message}
+
+      <div style="margin-top:18px;display:flex;justify-content:center;">
+        <button class="btn btn-primary" type="button" onclick="printSummary()" style="min-width:180px;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+            <path d="M7 9V3h10v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="5" y="13" width="14" height="8" rx="2" stroke="currentColor" stroke-width="2"/>
+            <path d="M7 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M17 13V9H7v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          ปริ้นท์สรุป
+        </button>
       </div>
     `;
+  } catch (err) {
+  $("summaryBox").innerHTML = `
+    <div style="color:var(--red);padding:16px 0;font-size:14px;">
+      โหลดข้อมูลไม่สำเร็จ: ${err.message}
+    </div>
+  `;
   }
 }
 
 function closeSummaryModal() {
   $("summaryModal").classList.remove("show");
   document.body.style.overflow = "";
+}
+
+function printSummary() {
+  const slipDate = $("slipDate")?.textContent || "";
+  const summaryHtml = $("summaryBox")?.innerHTML || "";
+
+  if (!summaryHtml.trim()) {
+    showToast("ยังไม่มีข้อมูลสำหรับพิมพ์", "warn");
+    return;
+  }
+
+  const printWindow = window.open("", "_blank", "width=820,height=900");
+  if (!printWindow) {
+    showToast("เบราว์เซอร์บล็อกหน้าต่างพิมพ์", "warn");
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="th">
+    <head>
+      <meta charset="UTF-8" />
+      <title>พิมพ์สรุปยอดขาย</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 24px;
+          color: #1c1c1e;
+          background: #fff;
+        }
+        .print-wrap {
+          max-width: 760px;
+          margin: 0 auto;
+        }
+        .print-title {
+          font-size: 24px;
+          font-weight: 700;
+          margin-bottom: 4px;
+        }
+        .print-date {
+          font-size: 14px;
+          color: #666;
+          margin-bottom: 18px;
+        }
+        .slip-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          gap: 12px;
+          padding: 8px 0;
+          font-size: 15px;
+          border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+        .slip-row strong {
+          font-size: 16px;
+          white-space: nowrap;
+        }
+        .slip-row--total {
+          border-top: 2px solid #111;
+          margin-bottom: 4px;
+          padding-top: 12px;
+        }
+        .slip-row--total strong {
+          font-size: 22px;
+        }
+        .slip-divider {
+          border: none;
+          border-top: 1px dashed rgba(0,0,0,0.2);
+          margin: 14px 0;
+        }
+        .slip-section-title {
+          font-size: 12px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: #666;
+          margin: 12px 0 8px;
+        }
+        .slip-menu-list {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .slip-menu-item {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 8px 10px;
+          background: #f6f6f8;
+          border-radius: 8px;
+          font-size: 14px;
+        }
+        button {
+          display: none !important;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="print-wrap">
+        <div class="print-title">สรุปยอดขาย</div>
+        <div class="print-date">${slipDate}</div>
+        ${summaryHtml}
+      </div>
+    </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 300);
 }
 
 function handleBackdropClick(e) {
@@ -1044,7 +1183,8 @@ function handleBackdropClick(e) {
 async function initializeApp() {
   const today = getToday();
   $("saleDate").value = today;
-  $("summaryDate").value = today;
+  $("summaryStartDate").value = getMonthStart(today);
+  $("summaryEndDate").value = today;
   $("todayBadge").textContent = formatDateDisplay(today);
   $("savedBillsDate").value = today;
   $("billNo").readOnly = true;
