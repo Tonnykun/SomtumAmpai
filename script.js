@@ -158,7 +158,9 @@ function handleLogin() {
 
   if (remember) {
     localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+    sessionStorage.removeItem(SESSION_KEY);
   } else {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
     localStorage.removeItem(SESSION_KEY);
   }
 
@@ -169,6 +171,7 @@ function handleLogin() {
 
 function logoutNow() {
   localStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
   currentUser = null;
   applyCurrentUserUI();
 
@@ -188,7 +191,10 @@ function handleLogout() {
 
 function checkSavedSession() {
   try {
-    const saved = localStorage.getItem(SESSION_KEY);
+    const saved =
+      sessionStorage.getItem(SESSION_KEY) ||
+      localStorage.getItem(SESSION_KEY);
+
     if (!saved) return false;
 
     const user = JSON.parse(saved);
@@ -913,17 +919,74 @@ async function showTodaySummary() {
       return;
     }
 
-    const totalSales = bills.reduce((s, b) => s + b.totalAmount, 0);
+    const allItems = bills.flatMap(bill =>
+      Array.isArray(bill.items) ? bill.items : []
+    );
+
+    const storeItems = allItems.filter(item => item.channel === "store");
+    const grabItems  = allItems.filter(item => item.channel === "grabfood");
+
+    const sumLineTotal = items =>
+      items.reduce((sum, item) => {
+        const lineTotal = Number(item.lineTotal);
+        if (!Number.isNaN(lineTotal)) return sum + lineTotal;
+
+        const price = Number(item.price || 0);
+        const qty   = Number(item.qty || 0);
+        return sum + (price * qty);
+      }, 0);
+
+    const sumQty = items =>
+      items.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+
+    const storeSales = sumLineTotal(storeItems);
+    const grabSales  = sumLineTotal(grabItems);
+
+    const storeQty = sumQty(storeItems);
+    const grabQty  = sumQty(grabItems);
+
+    const storeBillCount = bills.filter(bill =>
+      Array.isArray(bill.items) && bill.items.some(item => item.channel === "store")
+    ).length;
+
+    const grabBillCount = bills.filter(bill =>
+      Array.isArray(bill.items) && bill.items.some(item => item.channel === "grabfood")
+    ).length;
+
+    const channelSummaryHtml = `
+      <hr class="slip-divider"/>
+      <div class="slip-section-title">สรุปตามช่องทาง</div>
+
+      <div class="slip-row">
+        <span>หน้าร้าน</span>
+        <strong>${storeBillCount} บิล · ${storeQty} รายการ · ${formatMoney(storeSales)}</strong>
+      </div>
+
+      <div class="slip-row">
+        <span>GrabFood</span>
+        <strong>${grabBillCount} บิล · ${grabQty} รายการ · ${formatMoney(grabSales)}</strong>
+      </div>
+    `;
+
+    const totalSales = bills.reduce((sum, bill) => sum + Number(bill.totalAmount || 0), 0);
     const totalBills = bills.length;
+
     let totalQty = 0;
     const grouped = {};
 
     bills.forEach(bill => {
-      bill.items.forEach(item => {
-        totalQty += item.qty;
-        if (!grouped[item.foodName]) grouped[item.foodName] = { qty: 0, amount: 0 };
-        grouped[item.foodName].qty += item.qty;
-        grouped[item.foodName].amount += item.lineTotal;
+      (bill.items || []).forEach(item => {
+        const qty = Number(item.qty || 0);
+        const lineTotal = Number(item.lineTotal || 0);
+
+        totalQty += qty;
+
+        if (!grouped[item.foodName]) {
+          grouped[item.foodName] = { qty: 0, amount: 0 };
+        }
+
+        grouped[item.foodName].qty += qty;
+        grouped[item.foodName].amount += lineTotal;
       });
     });
 
@@ -934,27 +997,36 @@ async function showTodaySummary() {
           <span>${escapeHTML(name)} <span style="color:var(--text-tertiary);">×${data.qty}</span></span>
           <strong>${formatMoney(data.amount)}</strong>
         </div>
-      `).join("");
+      `)
+      .join("");
 
     $("summaryBox").innerHTML = `
       <div class="slip-row slip-row--total">
-        <span>ยอดขายรวม</span><strong>${formatMoney(totalSales)}</strong>
+        <span>ยอดขายรวม</span>
+        <strong>${formatMoney(totalSales)}</strong>
       </div>
+
       <div class="slip-row">
         <span>จำนวนบิล</span>
         <span style="font-family:var(--font-mono);font-weight:700;">${totalBills} บิล</span>
       </div>
+
       <div class="slip-row">
         <span>จำนวนที่ขายทั้งหมด</span>
         <span style="font-family:var(--font-mono);font-weight:700;">${totalQty} รายการ</span>
       </div>
+
+      ${channelSummaryHtml}
+
       <hr class="slip-divider"/>
       <div class="slip-section-title">สรุปตามเมนู</div>
       <div class="slip-menu-list">${menuItems}</div>
     `;
   } catch (err) {
     $("summaryBox").innerHTML = `
-      <div style="color:var(--red);padding:16px 0;font-size:14px;">โหลดข้อมูลไม่สำเร็จ: ${err.message}</div>
+      <div style="color:var(--red);padding:16px 0;font-size:14px;">
+        โหลดข้อมูลไม่สำเร็จ: ${err.message}
+      </div>
     `;
   }
 }
@@ -1029,11 +1101,13 @@ async function initializeApp() {
 document.addEventListener("DOMContentLoaded", async () => {
   bindAuthEvents();
 
-  await initializeApp();   // สำคัญมาก
-
-  applyCurrentUserUI();
-
-  if (!checkSavedSession()) {
+  const hasSession = checkSavedSession();
+  if (!hasSession) {
     showLoginScreen();
   }
+
+  await initializeApp();
+  applyCurrentUserUI();
 });
+
+
