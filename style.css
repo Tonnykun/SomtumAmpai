@@ -1157,7 +1157,7 @@ button:active { transform: scale(0.97); }
 }
 
 @media (max-width: 380px) {
-  .topbar-left gap { gap: 10px; }
+  .topbar-left { gap: 10px; }
   .app-title { font-size: 22px; }
   .stat-chip-value { font-size: 16px; }
 }
@@ -1603,4 +1603,43 @@ button:active { transform: scale(0.97); }
   .login-card {
     padding: 24px 18px 18px;
   }
+}
+
+/* ── Right Column ───────────────────────────────────────── */
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.expense-card {
+  width: 100%;
+}
+
+/* ── Saved Expenses ─────────────────────────────────────── */
+.saved-expenses-card {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 16px;
+  overflow: hidden;
+}
+
+.saved-expenses-card .table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.expense-note {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.expense-amount {
+  color: var(--red);
+  font-weight: 700;
+  font-family: var(--font-mono);
 }

@@ -69,12 +69,17 @@ const ADDON_OPTIONS = [
   { name: "ขนมจีน", price: 10 },
 ];
 
+const GRAB_PLATFORM_FEE_RATE = 0.35;
+
 /* ── State ──────────────────────────────────────────────── */
 let currentBillItems = [];
 let currentChannel   = "store";
 let allBillsCache    = [];
+let allExpensesCache = [];
 let manualPrice      = null;
 let isLoading        = false;
+
+const EXPENSES_LOCAL_KEY = "sales_app_expenses";
 
 /* ── DOM refs ───────────────────────────────────────────── */
 const $ = id => document.getElementById(id);
@@ -445,6 +450,97 @@ async function apiDeleteAll() {
   return data;
 }
 
+function normalizeExpenseFromApi(expense) {
+  return {
+    ...expense,
+    id: expense.id,
+    date: normalizeDateValue(expense.date),
+    category: String(expense.category || ""),
+    itemName: String(expense.itemName || ""),
+    amount: Number(expense.amount || 0),
+    note: String(expense.note || ""),
+    createdBy: String(expense.createdBy || ""),
+    createdAt: String(expense.createdAt || "")
+  };
+}
+
+async function apiFetchExpenses(params = {}) {
+  const url = new URL(APPS_SCRIPT_URL);
+  url.searchParams.set("action", "getExpenses");
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    cache: "no-store"
+  });
+
+  const text = await res.text();
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error("Apps Script ไม่ได้ส่ง JSON รายจ่ายกลับมา");
+  }
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+
+  if (!data.ok) {
+    throw new Error(data.error || "โหลดรายจ่ายไม่สำเร็จ");
+  }
+
+  return (data.expenses || []).map(normalizeExpenseFromApi);
+}
+
+async function apiSaveExpense(expense) {
+  let res;
+
+  try {
+    res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "saveExpense", ...expense })
+    });
+  } catch (err) {
+    throw new Error("เชื่อมต่อ Apps Script ไม่ได้ กรุณาตรวจ URL / Deploy / สิทธิ์ Web App");
+  }
+
+  const text = await res.text();
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error("Apps Script ไม่ได้ส่ง JSON กลับมา อาจยังไม่ได้ Deploy เวอร์ชันใหม่");
+  }
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+
+  if (!data.ok) {
+    throw new Error(data.error || "บันทึกรายจ่ายไม่สำเร็จ");
+  }
+
+  return data;
+}
+
+async function apiDeleteExpense(id) {
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "deleteExpense", id })
+  });
+
+  const data = await res.json();
+
+  if (!data.ok) {
+    throw new Error(data.error || "ลบรายจ่ายไม่สำเร็จ");
+  }
+
+  return data;
+}
+
 /* ── Loading helpers ────────────────────────────────────── */
 function setLoading(state) {
   isLoading = state;
@@ -653,6 +749,7 @@ function addItemToCurrentBill() {
   const finalUnitPrice = +(discountedMainPrice + addonPrice).toFixed(2);
 
   currentBillItems.push({
+    lineId: makeId(),
     channel: currentChannel,
     foodName,
     priceOriginal,
@@ -678,8 +775,9 @@ function addItemToCurrentBill() {
   showToast(`เพิ่ม ${foodName} ×${qty}`, "success");
 }
 
-function removeCurrentBillItem(foodName) {
-  currentBillItems = currentBillItems.filter(i => i.foodName !== foodName);
+function removeCurrentBillItem(index) {
+  currentBillItems.splice(index, 1);
+  renderCurrentBill();
 }
 
 function clearCurrentBill(askConfirm = true) {
@@ -695,6 +793,161 @@ function clearCurrentBill(askConfirm = true) {
   renderCurrentBill();
 }
 
+/* ── Expenses / Purchases ───────────────────────────────── */
+async function loadAndRenderExpenses() {
+  const tbody = $("expenseHistoryBody");
+
+  if (tbody) {
+    showTableLoading("expenseHistoryBody", 5);
+  }
+
+  try {
+    allExpensesCache = await apiFetchExpenses();
+    renderExpenses();
+  } catch (err) {
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr class="empty-row">
+          <td colspan="5" style="color:var(--red);">
+            โหลดรายจ่ายไม่สำเร็จ: ${err.message}
+          </td>
+        </tr>
+      `;
+    }
+  }
+}
+
+function clearExpenseForm() {
+  if ($("expenseDate")) $("expenseDate").value = getToday();
+  if ($("expenseCategory")) $("expenseCategory").value = "วัตถุดิบ";
+  if ($("expenseItemName")) $("expenseItemName").value = "";
+  if ($("expenseAmount")) $("expenseAmount").value = "";
+  if ($("expenseNote")) $("expenseNote").value = "";
+}
+
+async function saveExpense() {
+  if (isLoading) return;
+
+  const date = $("expenseDate")?.value || getToday();
+  const category = $("expenseCategory")?.value || "อื่น ๆ";
+  const itemName = $("expenseItemName")?.value.trim() || "";
+  const amount = parseFloat($("expenseAmount")?.value || "0");
+  const note = $("expenseNote")?.value.trim() || "";
+
+  if (!date) {
+    showToast("กรุณาเลือกวันที่ซื้อ", "warn");
+    return;
+  }
+
+  if (!itemName) {
+    showToast("กรุณากรอกรายการที่ซื้อ", "warn");
+    return;
+  }
+
+  if (Number.isNaN(amount) || amount <= 0) {
+    showToast("กรุณากรอกจำนวนเงินให้ถูกต้อง", "warn");
+    return;
+  }
+
+  const expense = {
+    id: makeId(),
+    date,
+    category,
+    itemName,
+    amount: +amount.toFixed(2),
+    note,
+    createdBy: currentUser?.username || "",
+    createdAt: new Date().toISOString()
+  };
+
+  setLoading(true);
+  showToast("กำลังบันทึกรายจ่าย...", "success", 60000);
+
+  try {
+    await retryOnceOnNetworkError(() => apiSaveExpense(expense), 900);
+
+    document.querySelectorAll(".toast").forEach(t => t.remove());
+
+    clearExpenseForm();
+    await loadAndRenderExpenses();
+
+    showToast(`บันทึกรายจ่ายสำเร็จ · ${formatMoney(expense.amount)}`, "success");
+  } catch (err) {
+    document.querySelectorAll(".toast").forEach(t => t.remove());
+    showToast(`บันทึกรายจ่ายไม่สำเร็จ: ${err.message}`, "error", 4000);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function getExpensesByDateRange(startDate, endDate) {
+  return allExpensesCache.filter(expense => {
+    const date = normalizeDateValue(expense.date);
+    return date >= startDate && date <= endDate;
+  });
+}
+
+function renderExpenses() {
+  const tbody = $("expenseHistoryBody");
+  if (!tbody) return;
+
+  const filterDate = $("expenseHistoryDate")?.value || "";
+
+  const expenses = filterDate
+    ? allExpensesCache.filter(expense => normalizeDateValue(expense.date) === filterDate)
+    : allExpensesCache;
+
+  if (!expenses.length) {
+    tbody.innerHTML = `
+      <tr class="empty-row">
+        <td colspan="5">
+          ${filterDate ? "ยังไม่มีรายจ่ายของวันที่เลือก" : "ยังไม่มีรายจ่ายที่บันทึกไว้"}
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const sorted = [...expenses].sort((a, b) => {
+    return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+  });
+
+  tbody.innerHTML = sorted.map(expense => `
+    <tr>
+      <td style="font-family:var(--font-mono);font-size:13px;white-space:nowrap;">
+        ${formatDateDisplay(expense.date)}
+      </td>
+      <td>
+        <span class="channel-tag channel-tag--store">${escapeHTML(expense.category)}</span>
+      </td>
+      <td>
+        ${escapeHTML(expense.itemName)}
+        ${expense.note ? `<span class="expense-note">${escapeHTML(expense.note)}</span>` : ""}
+      </td>
+      <td class="num expense-amount">- ${formatMoney(expense.amount)}</td>
+      <td>
+        <button class="btn-delete" type="button" onclick="deleteExpense(${expense.id})">✕</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function deleteExpense(id) {
+  showConfirm("ต้องการลบรายจ่ายนี้?", async () => {
+    setLoading(true);
+
+    try {
+      await apiDeleteExpense(id);
+      await loadAndRenderExpenses();
+      showToast("ลบรายจ่ายแล้ว", "warn");
+    } catch (err) {
+      showToast(`ลบรายจ่ายไม่สำเร็จ: ${err.message}`, "error", 4000);
+    } finally {
+      setLoading(false);
+    }
+  });
+}
+
 /* ── Render current bill ────────────────────────────────── */
 function renderCurrentBill() {
   const tbody = $("currentBillBody");
@@ -702,7 +955,7 @@ function renderCurrentBill() {
   if (!currentBillItems.length) {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="6">ยังไม่มีรายการในบิลปัจจุบัน</td></tr>`;
   } else {
-    tbody.innerHTML = currentBillItems.map(item => {
+    tbody.innerHTML = currentBillItems.map((item, index) => {
       const chClass = item.channel === "grabfood" ? "grab" : "store";
       const chLabel = item.channel === "grabfood" ? "Grab" : "ร้าน";
 
@@ -732,8 +985,7 @@ function renderCurrentBill() {
           <td class="num">${item.discountPct || 0}%</td>
           <td class="num amount">${formatMoney(item.lineTotal)}</td>
           <td>
-            <button class="btn-delete" onclick="removeCurrentBillItem('${item.foodName.replace(/'/g, "\\'")}')">✕</button>
-          </td>
+            <button type="button" class="btn-delete" onclick="removeCurrentBillItem(${index})">✕</button>
         </tr>
       `;
     }).join("");
@@ -764,9 +1016,10 @@ async function saveCurrentBill() {
     await retryOnceOnNetworkError(() => apiSaveBill(bill), 900);
     currentBillItems = [];
     renderCurrentBill();
-    await loadAndRenderSavedBills();
-    await updateStats();
-    await updateAutoBillNo();
+      await loadAndRenderSavedBills();
+      await loadAndRenderExpenses();
+      await updateStats();
+      await updateAutoBillNo();
     document.querySelectorAll(".toast").forEach(t => t.remove());
     showToast(`บันทึกบิล ${billNo} สำเร็จ · ${formatMoney(totalAmount)}`, "success");
   } catch (err) {
@@ -955,6 +1208,10 @@ async function showRangeSummary() {
     const storeSales = sumLineTotal(storeItems);
     const grabSales  = sumLineTotal(grabItems);
 
+    const grabPlatformFee = +(grabSales * GRAB_PLATFORM_FEE_RATE).toFixed(2);
+    const grabNetSales = +(grabSales - grabPlatformFee).toFixed(2);
+    const netTotalSales = +(storeSales + grabNetSales).toFixed(2);
+
     const storeQty = sumQty(storeItems);
     const grabQty  = sumQty(grabItems);
 
@@ -976,13 +1233,34 @@ async function showRangeSummary() {
       </div>
 
       <div class="slip-row">
-        <span>GrabFood</span>
+        <span>GrabFood ยอดขายก่อนหัก</span>
         <strong>${grabBillCount} บิล · ${grabQty} รายการ · ${formatMoney(grabSales)}</strong>
+      </div>
+
+      <div class="slip-row">
+        <span>ค่าบริการแพลตฟอร์ม 35%</span>
+        <strong style="color:var(--red);">- ${formatMoney(grabPlatformFee)}</strong>
+      </div>
+
+      <div class="slip-row">
+        <span>GrabFood หลังหัก 35%</span>
+        <strong style="color:var(--green-dark);">${formatMoney(grabNetSales)}</strong>
       </div>
     `;
 
-    const totalSales = bills.reduce((sum, bill) => sum + Number(bill.totalAmount || 0), 0);
+    const grossSales = bills.reduce((sum, bill) => sum + Number(bill.totalAmount || 0), 0);
     const totalBills = bills.length;
+
+    if (!allExpensesCache.length) {
+      allExpensesCache = await apiFetchExpenses();
+    }
+
+    const expensesInRange = getExpensesByDateRange(startDate, endDate);
+    const totalExpenses = expensesInRange.reduce((sum, expense) => {
+      return sum + Number(expense.amount || 0);
+    }, 0);
+
+    const profitAfterExpenses = +(netTotalSales - totalExpenses).toFixed(2);
 
     let totalQty = 0;
     const grouped = {};
@@ -1014,9 +1292,21 @@ async function showRangeSummary() {
       .join("");
 
     $("summaryBox").innerHTML = `
+      <div class="slip-row">
+        <span>ยอดขายสุทธิหลังหัก Grab 35%</span>
+        <strong>${formatMoney(netTotalSales)}</strong>
+      </div>
+
+      <div class="slip-row">
+        <span>รายจ่าย/ซื้อของ</span>
+        <strong style="color:var(--red);">- ${formatMoney(totalExpenses)}</strong>
+      </div>
+
       <div class="slip-row slip-row--total">
-        <span>ยอดขายรวม</span>
-        <strong>${formatMoney(totalSales)}</strong>
+        <span>กำไรคงเหลือ</span>
+        <strong style="color:${profitAfterExpenses < 0 ? "var(--red)" : "var(--green-dark)"};">
+          ${formatMoney(profitAfterExpenses)}
+        </strong>
       </div>
 
       <div class="slip-row">
@@ -1190,11 +1480,16 @@ async function initializeApp() {
   $("billNo").readOnly = true;
   $("billNo").placeholder = "รันอัตโนมัติ";
 
+  if ($("expenseDate")) $("expenseDate").value = today;
+  if ($("expenseHistoryDate")) $("expenseHistoryDate").value = today;
+
   renderFoodOptions();
   renderCurrentBill();
   updatePriceDisplay();
   renderAddonOptions();
   syncAddonPriceFromSelection();
+  loadExpensesFromLocal();
+  renderExpenses();
 
   try {
     await loadAndRenderSavedBills();
@@ -1228,6 +1523,9 @@ async function initializeApp() {
 
   $("savedBillsDate").addEventListener("change", () => {
     renderSavedBills();
+  });
+  $("expenseHistoryDate")?.addEventListener("change", () => {
+  renderExpenses();
   });
 
   document.addEventListener("keydown", e => {

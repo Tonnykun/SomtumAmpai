@@ -291,8 +291,11 @@
         </div>
       </section>
 
-      <!-- RIGHT: Summary -->
-      <section class="card" id="summaryCard">
+      <!-- RIGHT COLUMN -->
+      <div class="right-column">
+
+        <!-- RIGHT: Summary -->
+        <section class="card" id="summaryCard">
         <div class="card-header">
           <div class="card-header-icon card-header-icon--blue">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -341,9 +344,8 @@
             </svg>
             ดูสรุปช่วงวันที่
           </button>
-
         </div>
-
+        
         <!-- Danger zone -->
         <div class="danger-zone">
           <button class="btn btn-danger-ghost" onclick="clearAllBills()">
@@ -357,7 +359,87 @@
         </div>
       </section>
 
-    </div>
+            <!-- RIGHT: Expense / Purchase -->
+      <section class="card expense-card" id="expenseCard">
+        <div class="card-header">
+          <div class="card-header-icon card-header-icon--orange">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M6 6h15l-2 9H8L6 6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M6 6 5 3H2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
+              <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="card-title">บันทึกซื้อของ</h2>
+            <p class="card-desc">บันทึกต้นทุน/รายจ่าย เพื่อหักจากยอดขาย</p>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label" for="expenseDate">วันที่ซื้อ</label>
+              <div class="date-input-wrap">
+                <input class="field-input date-input" type="date" id="expenseDate" />
+                <span class="date-input-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="expenseCategory">หมวดหมู่</label>
+              <div class="select-wrap">
+                <select class="field-input" id="expenseCategory">
+                  <option value="วัตถุดิบ">วัตถุดิบ</option>
+                  <option value="เครื่องดื่ม/น้ำแข็ง">เครื่องดื่ม/น้ำแข็ง</option>
+                  <option value="แก๊ส/ถ่าน">แก๊ส/ถ่าน</option>
+                  <option value="บรรจุภัณฑ์">บรรจุภัณฑ์</option>
+                  <option value="ค่าแรง">ค่าแรง</option>
+                  <option value="อื่น ๆ">อื่น ๆ</option>
+                </select>
+                <span class="select-arrow">›</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:14px;">
+            <label class="field-label" for="expenseItemName">รายการที่ซื้อ</label>
+            <input class="field-input" type="text" id="expenseItemName" placeholder="เช่น มะละกอ, ปลาร้า, น้ำแข็ง" />
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label" for="expenseAmount">จำนวนเงิน</label>
+              <input class="field-input" type="number" id="expenseAmount" min="0" step="1" placeholder="0" />
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="expenseNote">หมายเหตุ</label>
+              <input class="field-input" type="text" id="expenseNote" placeholder="ไม่บังคับ" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" type="button" onclick="saveExpense()">
+              บันทึกรายจ่าย
+            </button>
+            <button class="btn btn-ghost" type="button" onclick="clearExpenseForm()">
+              ล้าง
+            </button>
+          </div>
+
+          <div class="hint-text">
+            รายจ่ายส่วนนี้จะนำไปหักกับยอดขายสุทธิในหน้าสรุปยอดขาย
+          </div>
+        </div>
+      </section>
+    </div> 
+  </div>
 
     <!-- Saved Bills -->
     <section class="card saved-bills-card">
@@ -406,7 +488,57 @@
       </div>
     </section>
 
-  </div><!-- /page -->
+    <!-- Saved Expenses -->
+    <section class="card saved-expenses-card">
+      <div class="card-header">
+        <div class="card-header-icon card-header-icon--orange">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M6 6h15l-2 9H8L6 6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M6 6 5 3H2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
+            <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="card-title">รายจ่ายที่บันทึกไว้</h2>
+          <p class="card-desc">ประวัติซื้อของ/ต้นทุนของร้าน</p>
+        </div>
+      </div>
+    
+      <div class="card-body">
+        <div class="saved-bills-toolbar">
+          <div class="field">
+            <label class="field-label" for="expenseHistoryDate">เลือกวันที่ที่ต้องการดู</label>
+            <div class="date-input-wrap">
+              <input class="field-input date-input" type="date" id="expenseHistoryDate" />
+              <span class="date-input-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                  <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>วันที่</th>
+                <th>หมวดหมู่</th>
+                <th>รายการ</th>
+                <th class="num">จำนวนเงิน</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="expenseHistoryBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
 
   <!-- Summary Modal -->
   <div class="modal-backdrop" id="summaryModal" onclick="handleBackdropClick(event)">
@@ -425,6 +557,6 @@
     </div>
   </div>
 
-  <script src="script.js?v=3"></script>
+  <script src="script.js?v=5"></script>
 </body>
 </html>
