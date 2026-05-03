@@ -1472,68 +1472,91 @@ function handleBackdropClick(e) {
 /* ── Init ───────────────────────────────────────────────── */
 async function initializeApp() {
   const today = getToday();
-  $("saleDate").value = today;
-  $("summaryStartDate").value = getMonthStart(today);
-  $("summaryEndDate").value = today;
-  $("todayBadge").textContent = formatDateDisplay(today);
-  $("savedBillsDate").value = today;
-  $("billNo").readOnly = true;
-  $("billNo").placeholder = "รันอัตโนมัติ";
+
+  if ($("saleDate")) $("saleDate").value = today;
+  if ($("summaryStartDate")) $("summaryStartDate").value = getMonthStart(today);
+  if ($("summaryEndDate")) $("summaryEndDate").value = today;
+  if ($("todayBadge")) $("todayBadge").textContent = formatDateDisplay(today);
+  if ($("savedBillsDate")) $("savedBillsDate").value = today;
 
   if ($("expenseDate")) $("expenseDate").value = today;
   if ($("expenseHistoryDate")) $("expenseHistoryDate").value = today;
 
+  if ($("billNo")) {
+    $("billNo").readOnly = true;
+    $("billNo").placeholder = "รันอัตโนมัติ";
+  }
+
+  // โหลดเมนูและราคาให้ทำงานก่อนเสมอ
   renderFoodOptions();
   renderCurrentBill();
   updatePriceDisplay();
   renderAddonOptions();
   syncAddonPriceFromSelection();
-  loadExpensesFromLocal();
-  renderExpenses();
 
-  try {
-    await loadAndRenderSavedBills();
-    await updateStats();
-    await updateAutoBillNo();
-  } catch (err) {
-    $("savedBillsBody").innerHTML = `
-      <tr class="empty-row">
-        <td colspan="5" style="color:var(--red);">
-          ⚠️ โหลดข้อมูลไม่สำเร็จ: ${err.message}
-        </td>
-      </tr>
-    `;
-  }
-
-  $("foodItem").addEventListener("change", () => {
-  manualPrice = null;
-  updatePriceDisplay();
+  // ผูก event เมนูอาหารก่อน เพื่อให้ราคาขึ้นเมื่อเลือกเมนู
+  $("foodItem")?.addEventListener("change", () => {
+    manualPrice = null;
+    updatePriceDisplay();
   });
 
-  $("salesChannel").addEventListener("change", () => {
+  $("salesChannel")?.addEventListener("change", () => {
     currentChannel = $("salesChannel").value;
     manualPrice = null;
     renderFoodOptions();
     updatePriceDisplay();
   });
 
-  $("saleDate").addEventListener("change", async () => {
+  $("saleDate")?.addEventListener("change", async () => {
     await updateAutoBillNo();
   });
 
-  $("savedBillsDate").addEventListener("change", () => {
+  $("savedBillsDate")?.addEventListener("change", () => {
     renderSavedBills();
   });
+
   $("expenseHistoryDate")?.addEventListener("change", () => {
-  renderExpenses();
+    renderExpenses();
   });
+
+  $("addonDetail")?.addEventListener("change", syncAddonPriceFromSelection);
 
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") closeSummaryModal();
   });
 
-  $("addonDetail").addEventListener("change", syncAddonPriceFromSelection);
+  // โหลดบิลย้อนหลัง แยก try ไม่ให้พังทั้งระบบ
+  try {
+    await loadAndRenderSavedBills();
+  } catch (err) {
+    console.error("loadAndRenderSavedBills failed:", err);
+  }
 
+  // โหลดรายจ่าย แยก try ไม่ให้ไปกระทบเลขบิล
+  try {
+    if (typeof loadAndRenderExpenses === "function") {
+      await loadAndRenderExpenses();
+    }
+  } catch (err) {
+    console.error("loadAndRenderExpenses failed:", err);
+  }
+
+  // อัปเดตสถิติ แยก try
+  try {
+    await updateStats();
+  } catch (err) {
+    console.error("updateStats failed:", err);
+  }
+
+  // รันเลขบิลต้องทำท้ายสุดเสมอ
+  try {
+    await updateAutoBillNo();
+  } catch (err) {
+    console.error("updateAutoBillNo failed:", err);
+    if ($("billNo") && !$("billNo").value) {
+      $("billNo").value = "1";
+    }
+  }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
